@@ -372,6 +372,7 @@ its own CRON service).
 | Scratch purged | Not purged, except `stmp` on `/scratch3-4` (weekly, Monday, files older than 30 days) and `/scratch5/purged` (files not accessed in 90 days) |
 | Long-term archive | NESCC-HPSS or GFDL-DMF only |
 | Check quota | `quota -Qs` on Gaea, Ursa, Hera and Mercury; `homeuse` on Pan; `saccount_params` on Hera and Orion only |
+| Check fairshare | `sfairshare` on Hera only; `saccount_params` (Hera, Orion) reports per-project fairshare elsewhere |
 
 The RDHPCS queue-policy page states a fleet-wide 50 GB home quota, but the
 per-system tables on the data-storage page contradict it, and the example
@@ -793,7 +794,7 @@ Body, in this section order, with exactly these facts:
 #SBATCH -t 2:00:00
 #SBATCH -o /scratch3/user/myjob_%j.out
 
-module load intel oneapi-hpckit
+module load intel impi
 srun ./my_mpi_app
 ```
 
@@ -853,7 +854,7 @@ Create `skills/hpc-skills/rdhpcs-ursa/references/storage.md` (~160 lines) titled
 
 - [ ] **Step 6: Write `references/programming-env.md`**
 
-Create `skills/hpc-skills/rdhpcs-ursa/references/programming-env.md` (~190 lines) titled `# Ursa Programming Environment Reference`. Sections: spack-based LMOD modules and `module spider`; compiler table (Intel oneAPI, nvhpc, AOCC) with the accelerator stack each targets; MPI table (Intel MPI, HPC-X, OpenMPI) with the documented HPC-X recommendation on NDR-200; CUDA versus ROCm selection per partition; the ARM caveat for `u1-gh` (rebuild, do not copy binaries); GPU-aware MPI settings; affinity guidance (`SLURM_CPU_BIND=cores`, `KMP_AFFINITY=scatter`); Python via Miniforge with the self-support warning; Podman as the RDHPCS-sanctioned container runtime; profilers (Linaro Forge, TAU) and debuggers (DDT, gdb).
+Create `skills/hpc-skills/rdhpcs-ursa/references/programming-env.md` (~190 lines) titled `# Ursa Programming Environment Reference`. Sections: spack-based LMOD modules and `module spider`; compiler table (Intel oneAPI, nvhpc, AOCC) with the accelerator stack each targets; MPI table (Intel MPI, HPC-X, OpenMPI) with the documented HPC-X recommendation on NDR-200; CUDA versus ROCm selection per partition; the ARM caveat for `u1-gh` (rebuild, do not copy binaries); GPU-aware MPI settings; affinity guidance (`--cpu-bind=cores`, `--hint=nomultithread`, `KMP_AFFINITY=scatter`); Python via `module load rdhpcs-python` plus Miniforge with the self-support warning; **Apptainer** as the container runtime on Ursa (RDHPCS supports SingularityCE/Apptainer and explicitly not Docker; Podman is PPAN/Gaea only); profilers (Linaro Forge MAP, TAU) and debuggers (DDT remote connection — note that gdb, GDB4HPC and Valgrind4hpc are documented for Gaea, not Ursa). Also record that the fleet compilers page recommends Intel plus Intel MPI and lists only Intel and NVIDIA compilers, while the Ursa page adds AOCC and prefers HPC-X on NDR-200.
 
 - [ ] **Step 7: Run test to verify it passes**
 
@@ -986,11 +987,11 @@ Create `skills/hpc-skills/rdhpcs-orion/references/job-scripts.md` (~200 lines) t
 
 - [ ] **Step 5: Write `references/storage.md`**
 
-Create `skills/hpc-skills/rdhpcs-orion/references/storage.md` (~150 lines) titled `# Orion Storage Reference`. Sections: filesystem overview table (10 GB home, `work` 9 PB, `work2` 18 PB with hot pool, `$TMPDIR`, HPSS); quota checks (`saccount_params` — documented on Orion, it prints home quota in MB plus `DiskInUse`/`Quota`/`Files`/`FileQUota` per project directory — `quota`, and `du -sh $HOME`); nightly home backup and the snapshot path; scratch is neither backed up nor long-term storage; hot-pool double counting on `work2`; HPSS/HSMS archiving from the `service` partition; the `/work/<project>/<user>` directory convention; file-count quota advice (tar small files).
+Create `skills/hpc-skills/rdhpcs-orion/references/storage.md` (~150 lines) titled `# Orion Storage Reference`. Sections: filesystem overview table (10 GB home, `work` 9 PB, `work2` 18 PB with hot pool, `$TMPDIR`, HPSS); quota checks (`saccount_params` — documented on Orion, it prints home quota in MB plus `DiskInUse`/`Quota`/`Files`/`FileQUota` per project directory — `du -sh $HOME`, and `quota -Qs` only if it is present, since the storage page lists `quota` for Gaea, Ursa, Hera and Mercury but not Orion); nightly home backup and the snapshot path; scratch is neither backed up nor long-term storage; hot-pool double counting on `work2`; HPSS/HSMS archiving from the `service` partition; the `/work/<project>/<user>` directory convention; file-count quota advice (tar small files).
 
 - [ ] **Step 6: Write `references/programming-env.md`**
 
-Create `skills/hpc-skills/rdhpcs-orion/references/programming-env.md` (~180 lines) titled `# Orion Programming Environment Reference`. MSU-HPC publishes the module list rather than a fixed compiler/MPI recommendation, so this file must teach **discovery** instead of asserting pairings: LMOD modules and `module spider`; `module avail` after loading a compiler family; the compiler families and MPI implementations as things to enumerate at runtime; MPI launch patterns with `srun`; OpenMP thread and affinity settings; job-array and hybrid build notes; Python via Miniforge with the self-support warning; Podman containers; debugging and profiling tools where the module tree provides them.
+Create `skills/hpc-skills/rdhpcs-orion/references/programming-env.md` (~180 lines) titled `# Orion Programming Environment Reference`. MSU-HPC publishes the module list rather than a fixed compiler/MPI recommendation, so this file must teach **discovery** instead of asserting pairings: LMOD modules and `module spider`; `module avail` after loading a compiler family; the compiler families and MPI implementations as things to enumerate at runtime; MPI launch patterns with `srun`; OpenMP thread and affinity settings; job-array and hybrid build notes; Python via `module load contrib; module load rdhpcs-python` with the self-support warning; containers through **`module load singularity`** (the RDHPCS container page lists singularity with a required module load on Hercules/Orion — Podman is documented for Gaea and PPAN only, and needs a help-desk access request); debugging and profiling tools where the module tree provides them.
 
 - [ ] **Step 7: Run test to verify it passes**
 

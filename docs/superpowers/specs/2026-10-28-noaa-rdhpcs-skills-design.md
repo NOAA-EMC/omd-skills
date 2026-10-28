@@ -35,7 +35,10 @@ therefore used for NOAA *software and coding standards*, and
 docs.rdhpcs.noaa.gov is used for *machine facts*. This design does not embed
 omd tool calls in the skills (see §9).
 
-Jet is decommissioned and is out of scope.
+Jet is decommissioned and is out of scope. Its data stays readable on Ursa
+login nodes at `/jet/home/$USER`, `/jet/contrib` and `/jet/lfs[5,6]` only until
+2026-07-31, and only LFS files accessed during March 2026 survived, so the
+Ursa/PPAN/Gaea skills must not send an agent to Jet for anything.
 
 ## 3. Systems in scope
 
@@ -43,8 +46,8 @@ Jet is decommissioned and is out of scope.
 |---|---|---|---|
 | Hera | Slurm + LMOD | NESCC, Fairmont WV | Skylake 6148, 40 cores/node |
 | Ursa | Slurm | NESCC, Fairmont WV | AMD Genoa CPU + NVIDIA H100 / GH200 / AMD MI300X GPU partitions |
-| Orion | Slurm + LMOD | MSU HPC2 | Skylake 6148, 40 cores/node |
-| Hercules | Slurm + LMOD | MSU HPC2 | Xeon 8380, 80 cores/node |
+| Orion | Slurm + LMOD | MSU HPC2 | Skylake 6148, 40 cores/node. Managed by Mississippi State University, not OCIO; NOAA documents it in the MSU-HPC user guide and it is not in the RDHPCS systems list |
+| Hercules | Slurm + LMOD | MSU HPC2 | Xeon 8380, 80 cores/node. MSU-HPC, as Orion |
 | Gaea | Slurm federation + Cray CPE | ORNL NCCS | C5/C6/C7 HPE-Cray EX3000, GPFS F5/F6/F7 |
 | PPAN | Slurm | GFDL, Princeton NJ | analysis + post-processing hosts, CXFS |
 | Mercury | none | NESCC/GFDL | data transfer only, no compute nodes |
@@ -133,6 +136,40 @@ their own deltas rather than restating a full table:
 - **Hot-pool double counting.** On `/scratch3-4`, the first 1 GB of an active
   file is written to the SSD tier and mirrored to HDD, so reported usage may be
   doubled.
+- **Compilers and MPI.** The fleet software page lists Intel and NVIDIA
+  compilers with Intel MPI and recommends the **Intel compiler + Intel MPI**
+  combination unless there is a specific reason otherwise: `module load intel/<v>
+  impi/<v>` with wrappers `ifx`/`ifort` (Fortran), `icx`/`icc` (C/C++),
+  `mpiifx -fc=ifx`, `mpiicx`. There is **no `oneapi-hpckit` module** anywhere in
+  the docs. `-xHOST` is recommended for **Hera only**. Debug starting point
+  `-O0 -g -traceback -check all -fpe0`. Ursa's own page additionally lists AMD
+  AOCC and HPC-X/OpenMPI and says it has seen better performance and stability
+  from HPC-X on the NDR-200 fabric, so the Ursa skill reconciles the two rather
+  than picking one.
+- **Containers.** RDHPCS supports **SingularityCE and Apptainer** and explicitly
+  criticises Docker (root/sudo to build and run; microservice model fits large
+  parallel jobs poorly). Per system: Gaea apptainer, Hera singularity +
+  apptainer, Ursa apptainer, PPAN singularity, Hercules/Orion singularity with
+  `module load singularity` (their apptainer is a Spack-managed install that
+  loads its own environment and may not combine with other modules). **Podman is
+  not the fleet runtime** — it appears only in the PPAN and Gaea guides and
+  needs an email to `oar.gfdl.help@noaa.gov` for access. The Ursa `u1-gh` Grace
+  Hopper compute nodes are air-gapped, so ARM images must be built or pulled on a
+  login node with `--arch arm64`. RDHPCS also runs a container registry at
+  `registry.rdhpcs.noaa.gov`, which doubles as a spack mirror.
+- **Debuggers and profilers.** Linaro Forge **DDT** is the documented GUI
+  debugger; the recommended workflow is a **locally installed client connecting
+  to the remote system over a forwarded SSH port**, and the local client version
+  must match the Forge version on the system. Hera documents DDT and `map
+  --profile` (MAP) with `module load intel impi forge`. GDB, GDB4HPC,
+  Valgrind4hpc and the HPE Performance Analysis Tools are documented on **Gaea
+  only**. Ursa, Orion/Hercules and PPAN publish no profiler or affinity
+  guidance, so those skills point at the fleet pages and tell the agent to
+  confirm with `module spider`.
+- **Python.** `module load rdhpcs-python` on Gaea (after `module use
+  /ncrc/usw/rdhpcs/modulefiles/`), Hera, Ursa and PPAN; `module load python` on
+  Mercury; `module load contrib` **then** `module load rdhpcs-python` on
+  Orion/Hercules.
 
 Its `description` and `compatibility` are updated to name RDHPCS. Machine
 skills link to it for shared policy but restate the values a user on that
@@ -265,7 +302,11 @@ main failure mode:
 - `archrpt` for archive reports and group/user quotas.
 - Nearly 200 PB of archive storage; Slurm lets Gaea jobs submit
   post-processing here.
-- Podman available.
+- Containers: the fleet container table gives PPAN **singularity** with no
+  module load required. The PPAN guide additionally documents **Podman** on
+  PPAN and Gaea, but access must be requested by emailing
+  `oar.gfdl.help@noaa.gov` and naming Podman in the subject, so the skill leads
+  with singularity and mentions Podman only as the opt-in alternative.
 
 ### 7.7 rdhpcs-mercury
 

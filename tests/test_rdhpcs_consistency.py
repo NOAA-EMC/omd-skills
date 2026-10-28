@@ -20,6 +20,7 @@ HPC = ROOT / "skills" / "hpc-skills"
 # skill directory name -> expected metadata.system value
 MACHINE_SKILLS: dict[str, str] = {
     "rdhpcs-hera": "hera",
+    "rdhpcs-ursa": "ursa",
 }
 
 # QOS columns that machine skills must agree with when they publish them.

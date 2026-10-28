@@ -319,6 +319,7 @@ its own CRON service).
 | Scratch purged | Not purged, except `stmp` on `/scratch3-4` (weekly, Monday, files older than 30 days) and `/scratch5/purged` (files not accessed in 90 days) |
 | Long-term archive | NESCC-HPSS or GFDL-DMF only |
 | Check quota | `quota -Qs` on Gaea, Ursa, Hera and Mercury; `homeuse` on Pan; `saccount_params` on Hera and Orion only |
+| Check fairshare | `sfairshare` on Hera only; `saccount_params` (Hera, Orion) reports per-project fairshare elsewhere |
 
 The RDHPCS queue-policy page states a fleet-wide 50 GB home quota, but the
 per-system tables on the data-storage page contradict it, and the example
