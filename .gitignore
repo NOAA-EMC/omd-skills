@@ -21,3 +21,6 @@ login.tmp
 skills/baseeval-skills/perlmutter-ns-skills/*/runs/
 /results/
 skills/baseeval-skills/lm-eval-harness-skills/*/results/
+
+# Subagent-driven-development scratch (ledger, briefs, reports)
+.superpowers/
