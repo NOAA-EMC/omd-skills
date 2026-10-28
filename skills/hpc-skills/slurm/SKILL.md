@@ -7,8 +7,8 @@ description: >
   scripts, choosing RDHPCS QOS tiers (batch, urgent, debug, long, windfall,
   gpu, gpuwf), respecting login-node and scratch rules on Hera, Ursa, Orion,
   Hercules, or Gaea, escalating a pending job's QOS with scontrol update, or
-  checking fair-share and file-system quotas with sacctmgr, sacccount_params,
-  or lfs quota.
+  checking fair-share and file-system quotas with sacctmgr, sfairshare,
+  saccount_params, or quota.
 compatibility: Requires access to a Slurm cluster (sbatch, squeue, sacct, sinfo available in PATH). RDHPCS systems additionally require CAC/PIV or YubiKey authentication through an RDHPCS bastion and a signed master certificate.
 metadata:
   version: "2.0"
@@ -313,12 +313,18 @@ its own CRON service).
 
 | Rule | Value |
 |------|-------|
-| Home quota | 50 GB per system at `/home/First.Last`, except MSU-HPC Orion and Hercules at 10 GB |
-| Home backed up | Yes, nightly, plus per-day snapshots in `~/.snapshot` |
+| Home quota | **Per system, not uniform**: Gaea 50 GB; Ursa and Hera 30 GB; Mercury, Pan, Orion and Hercules 10 GB |
+| Home backed up | Yes, regularly, plus per-day snapshots in `~/.snapshot` |
 | Scratch backed up | **No** — scratch is not backed up and must never be treated as long-term storage |
 | Scratch purged | Not purged, except `stmp` on `/scratch3-4` (weekly, Monday, files older than 30 days) and `/scratch5/purged` (files not accessed in 90 days) |
 | Long-term archive | NESCC-HPSS or GFDL-DMF only |
-| Check quota | `sacccount_params`, `quota`, or `lfs quota -u $USER <path>` |
+| Check quota | `quota -Qs` on Gaea, Ursa, Hera and Mercury; `homeuse` on Pan; `saccount_params` on Hera and Orion only |
+
+The RDHPCS queue-policy page states a fleet-wide 50 GB home quota, but the
+per-system tables on the data-storage page contradict it, and the example
+output in that page's own quota section differs again. Trust what `quota -Qs`
+reports on the system you are using over any number in these skills, and ask
+the Help Desk rather than assuming a larger allowance.
 
 Do not run jobs against files in `/home`, including through symlinks that
 point at scratch. It degrades the home file system for every user on the

@@ -117,9 +117,15 @@ their own deltas rather than restating a full table:
 - **Login node prohibition.** No computation on front ends; use the `service`
   partition for compiles, data transfer, and HPSS access.
 - **`scrontab` preferred over `cron`** for recurring work.
-- **Home quota.** 50 GB per system (`/home/First.Last`), except MSU-HPC at
-  10 GB; check with `sacccount_params` or `quota`; `/home` is backed up and
-  supports user-recoverable snapshots at `~/.snapshot`.
+- **Home quota.** Not uniform across the fleet. The per-system tables on the
+  data-storage page give Gaea 50 GB, Ursa and Hera 30 GB, Mercury and Pan
+  10 GB, and the MSU-HPC guide gives Orion and Hercules 10 GB; the queue-policy
+  page's fleet-wide "50 GB on each system" sentence contradicts those tables
+  and is the less specific claim, so the skills state the per-system number and
+  note the conflict. Check with `quota -Qs` (Gaea, Ursa, Hera, Mercury),
+  `homeuse` (Pan), or `saccount_params` (Hera and Orion only — not a fleet
+  command). `/home` is backed up and supports user-recoverable snapshots at
+  `~/.snapshot`.
 - **Scratch is never backed up.** HPFS-scratch is for current job I/O, not long
   term storage; use HPSS/GFDL-DMF for archive.
 - **Purge rules.** `stmp` on `/scratch3-4` purged weekly (Monday, >30 days);
@@ -297,7 +303,8 @@ covering the failures an agent actually produces:
   `gpuwf`; other submissions are rejected.
 - Forgetting `--exclusive` when a job needs a whole Ursa node.
 - Compiling or running on a login node instead of `service`.
-- Exceeding `/home` quota — 50 GB, but 10 GB on MSU.
+- Exceeding `/home` quota — 30 GB on Hera/Ursa, 50 GB on Gaea, 10 GB on
+  Mercury, Pan, Orion and Hercules.
 - No `-t` on MSU: default wall clock is 5 minutes.
 - MPI-IO on Lustre without `I_MPI_EXTRA_FILESYSTEM` set.
 - Gaea: wrong `-M` cluster, or writing to `/gpfs/f6` from a C5 job.

@@ -18,13 +18,29 @@ ROOT = Path(__file__).resolve().parents[1]
 HPC = ROOT / "skills" / "hpc-skills"
 
 # skill directory name -> expected metadata.system value
-MACHINE_SKILLS: dict[str, str] = {}
+MACHINE_SKILLS: dict[str, str] = {
+    "rdhpcs-hera": "hera",
+}
 
 # QOS columns that machine skills must agree with when they publish them.
 CHECKED_QOS_COLUMNS = ("Max walltime", "Billing TRES")
 
-# Skills whose /home quota is the MSU-HPC 10 GB rather than the RDHPCS 50 GB.
-MSU_SKILLS = {"rdhpcs-orion", "rdhpcs-hercules"}
+# Per-system /home quota, taken from the per-system tables in
+# https://docs.rdhpcs.noaa.gov/data/storage.html (Gaea 50, Ursa and Hera 30,
+# Mercury and Pan 10) and the MSU-HPC guide (Orion and Hercules 10 GB).  The
+# Queue Policy page claims a fleet-wide 50 GB, which those tables contradict;
+# None means RDHPCS publishes no number for the system, so the skill must not
+# invent one.
+HOME_QUOTA_GB: dict[str, str | None] = {
+    "rdhpcs-hera": "30 GB",
+    "rdhpcs-ursa": "30 GB",
+    "rdhpcs-gaea": "50 GB",
+    "rdhpcs-ppan": "10 GB",
+    "rdhpcs-mercury": "10 GB",
+    "rdhpcs-orion": "10 GB",
+    "rdhpcs-hercules": "10 GB",
+    "rdhpcs-cloud": None,
+}
 
 # Facts that must appear in the slurm skill's shared-policy section.
 REQUIRED_POLICY_FACTS = (
@@ -34,7 +50,8 @@ REQUIRED_POLICY_FACTS = (
     "YubiKey",
     "1500",
     "400",
-    "50 GB",
+    "Gaea 50 GB",
+    "Ursa and Hera 30 GB",
     "not backed up",
     "scrontab",
     "hot pool",
@@ -135,21 +152,29 @@ class MachineSkillConsistencyTests(unittest.TestCase):
                         )
 
     def test_home_quota_matches_the_system(self) -> None:
-        """Where a skill states a /home quota, MSU systems say 10 GB and the rest 50 GB."""
+        """A /home table row states only that system's own published quota.
+
+        RDHPCS publishes a per-system quota in its storage tables, and the fleet
+        is not uniform, so every number in a ``/home`` row must equal the value
+        for this system.  Systems with no published number must not state one.
+        """
 
         for name in MACHINE_SKILLS:
-            text = read(HPC / name / "SKILL.md")
-            expected = "10 GB" if name in MSU_SKILLS else "50 GB"
-            wrong = "50 GB" if expected == "10 GB" else "10 GB"
-            storage = [
+            expected = HOME_QUOTA_GB[name]
+            rows = [
                 line
-                for line in text.splitlines()
-                if "/home" in line and "|" in line and "GB" in line
+                for line in read(HPC / name / "SKILL.md").splitlines()
+                if "/home" in line and line.lstrip().startswith("|")
             ]
-            for line in storage:
-                with self.subTest(skill=name):
-                    self.assertIn(expected, line)
-                    self.assertNotIn(wrong, line)
+            with self.subTest(skill=name):
+                self.assertTrue(rows, f"{name} has no /home storage table row")
+            for line in rows:
+                stated = re.findall(r"\b(\d+) GB\b", line)
+                with self.subTest(skill=name, line=line):
+                    if expected is None:
+                        self.assertEqual(stated, [], f"{name} states an unpublished quota")
+                    else:
+                        self.assertEqual(stated, [expected.split()[0]])
 
     def test_reference_links_resolve(self) -> None:
         for name in MACHINE_SKILLS:

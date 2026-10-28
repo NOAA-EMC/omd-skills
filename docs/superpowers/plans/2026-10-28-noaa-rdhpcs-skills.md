@@ -41,7 +41,7 @@ Establishes the canonical QOS/quota table and the guard that later tasks extend.
 - Modify: `skills/hpc-skills/slurm/SKILL.md` (frontmatter lines 3–14; append one section at the end)
 
 **Interfaces:**
-- Produces: `tests/test_rdhpcs_consistency.py` with module-level `MACHINE_SKILLS: dict[str, str]` (skill dir name → expected `metadata.system`), `MSU_SKILLS: set[str]`, `parse_md_tables(text) -> list[dict[str, str]]`, `qos_table(text) -> dict[str, dict[str, str]]`, `cell_tokens(cell) -> set[str]`, `CHECKED_QOS_COLUMNS`. Tasks 2–9 modify `MACHINE_SKILLS` only.
+- Produces: `tests/test_rdhpcs_consistency.py` with module-level `MACHINE_SKILLS: dict[str, str]` (skill dir name → expected `metadata.system`), `HOME_QUOTA_GB: dict[str, str | None]`, `parse_md_tables(text) -> list[dict[str, str]]`, `qos_table(text) -> dict[str, dict[str, str]]`, `cell_tokens(cell) -> set[str]`, `CHECKED_QOS_COLUMNS`. Tasks 2–9 modify `MACHINE_SKILLS` only.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -73,8 +73,22 @@ MACHINE_SKILLS: dict[str, str] = {}
 # QOS columns that machine skills must agree with when they publish them.
 CHECKED_QOS_COLUMNS = ("Max walltime", "Billing TRES")
 
-# Skills whose /home quota is the MSU-HPC 10 GB rather than the RDHPCS 50 GB.
-MSU_SKILLS = {"rdhpcs-orion", "rdhpcs-hercules"}
+# Per-system /home quota, from the per-system tables on
+# https://docs.rdhpcs.noaa.gov/data/storage.html (Gaea 50, Ursa and Hera 30,
+# Mercury and Pan 10) and the MSU-HPC guide (Orion and Hercules 10 GB).  The
+# Queue Policy page claims a fleet-wide 50 GB, which those tables contradict;
+# None means RDHPCS publishes no number for the system, so the skill must not
+# invent one.
+HOME_QUOTA_GB: dict[str, str | None] = {
+    "rdhpcs-hera": "30 GB",
+    "rdhpcs-ursa": "30 GB",
+    "rdhpcs-gaea": "50 GB",
+    "rdhpcs-ppan": "10 GB",
+    "rdhpcs-mercury": "10 GB",
+    "rdhpcs-orion": "10 GB",
+    "rdhpcs-hercules": "10 GB",
+    "rdhpcs-cloud": None,
+}
 
 # Facts that must appear in the slurm skill's shared-policy section.
 REQUIRED_POLICY_FACTS = (
@@ -84,7 +98,8 @@ REQUIRED_POLICY_FACTS = (
     "YubiKey",
     "1500",
     "400",
-    "50 GB",
+    "Gaea 50 GB",
+    "Ursa and Hera 30 GB",
     "not backed up",
     "scrontab",
     "hot pool",
@@ -185,21 +200,29 @@ class MachineSkillConsistencyTests(unittest.TestCase):
                         )
 
     def test_home_quota_matches_the_system(self) -> None:
-        """Where a skill states a /home quota, MSU systems say 10 GB and the rest 50 GB."""
+        """A /home table row states only that system's own published quota.
+
+        RDHPCS publishes a per-system quota in its storage tables, and the fleet
+        is not uniform, so every number in a ``/home`` row must equal the value
+        for this system.  Systems with no published number must not state one.
+        """
 
         for name in MACHINE_SKILLS:
-            text = read(HPC / name / "SKILL.md")
-            expected = "10 GB" if name in MSU_SKILLS else "50 GB"
-            wrong = "50 GB" if expected == "10 GB" else "10 GB"
-            storage = [
+            expected = HOME_QUOTA_GB[name]
+            rows = [
                 line
-                for line in text.splitlines()
-                if "/home" in line and "|" in line and "GB" in line
+                for line in read(HPC / name / "SKILL.md").splitlines()
+                if "/home" in line and line.lstrip().startswith("|")
             ]
-            for line in storage:
-                with self.subTest(skill=name):
-                    self.assertIn(expected, line)
-                    self.assertNotIn(wrong, line)
+            with self.subTest(skill=name):
+                self.assertTrue(rows, f"{name} has no /home storage table row")
+            for line in rows:
+                stated = re.findall(r"\b(\d+) GB\b", line)
+                with self.subTest(skill=name, line=line):
+                    if expected is None:
+                        self.assertEqual(stated, [], f"{name} states an unpublished quota")
+                    else:
+                        self.assertEqual(stated, [expected.split()[0]])
 
     def test_reference_links_resolve(self) -> None:
         for name in MACHINE_SKILLS:
@@ -246,8 +269,8 @@ description: >
   scripts, choosing RDHPCS QOS tiers (batch, urgent, debug, long, windfall,
   gpu, gpuwf), respecting login-node and scratch rules on Hera, Ursa, Orion,
   Hercules, or Gaea, escalating a pending job's QOS with scontrol update, or
-  checking fair-share and file-system quotas with sacctmgr, sacccount_params,
-  or lfs quota.
+  checking fair-share and file-system quotas with sacctmgr, sfairshare,
+  saccount_params, or quota.
 compatibility: Requires access to a Slurm cluster (sbatch, squeue, sacct, sinfo available in PATH). RDHPCS systems additionally require CAC/PIV or YubiKey authentication through an RDHPCS bastion and a signed master certificate.
 metadata:
   version: "2.0"
@@ -343,12 +366,18 @@ its own CRON service).
 
 | Rule | Value |
 |------|-------|
-| Home quota | 50 GB per system at `/home/First.Last`, except MSU-HPC Orion and Hercules at 10 GB |
-| Home backed up | Yes, nightly, plus per-day snapshots in `~/.snapshot` |
+| Home quota | **Per system, not uniform**: Gaea 50 GB; Ursa and Hera 30 GB; Mercury, Pan, Orion and Hercules 10 GB |
+| Home backed up | Yes, regularly, plus per-day snapshots in `~/.snapshot` |
 | Scratch backed up | **No** — scratch is not backed up and must never be treated as long-term storage |
 | Scratch purged | Not purged, except `stmp` on `/scratch3-4` (weekly, Monday, files older than 30 days) and `/scratch5/purged` (files not accessed in 90 days) |
 | Long-term archive | NESCC-HPSS or GFDL-DMF only |
-| Check quota | `sacccount_params`, `quota`, or `lfs quota -u $USER <path>` |
+| Check quota | `quota -Qs` on Gaea, Ursa, Hera and Mercury; `homeuse` on Pan; `saccount_params` on Hera and Orion only |
+
+The RDHPCS queue-policy page states a fleet-wide 50 GB home quota, but the
+per-system tables on the data-storage page contradict it, and the example
+output in that page's own quota section differs again. Trust what `quota -Qs`
+reports on the system you are using over any number in these skills, and ask
+the Help Desk rather than assuming a larger allowance.
 
 Do not run jobs against files in `/home`, including through symlinks that
 point at scratch. It degrades the home file system for every user on the
@@ -488,8 +517,11 @@ resource frees up first, which RDHPCS recommends for general compute work.
 | `novel` | novel | Nearly the whole system. Needs a help ticket in advance **and** `--qos=novel` |
 | `service` | batch, windfall | External network and HPSS access. Runs on front ends; default 1 core, maximum 4 cores, 24 hour limit |
 
-`hera` is the default partition — confirm with `sinfo -h -o "%P"`, where Slurm marks the
-default partition with an asterisk.
+`hera` is the default partition — the documented way to confirm is:
+
+```bash
+sinfo -O partition     # hera* service bigmem novel  (asterisk marks the default)
+```
 
 ## QOS
 
@@ -538,7 +570,7 @@ the `service` partition when the job needs external network or HPSS.
 
 | Filesystem | Path | Quota | Backup | Use for |
 |-----------|------|-------|--------|---------|
-| Home | `/home/First.Last` | 50 GB | Yes, plus `~/.snapshot` | Code and configs — never job I/O |
+| Home | `/home/First.Last` | 30 GB | Yes, plus `~/.snapshot` | Code and configs — never job I/O |
 | Scratch | `/scratch3`, `/scratch4` | project-based | **No** | Job input and output |
 | VAST scratch | `/scratch5` | project quota for `rstprod` and `public`; `/scratch5/purged/<First.Last>` for everyone else | **No** | All-flash experimental area, 90-day purge |
 | Node-local | `$TMPDIR` | per node | job lifetime | Fast temporary files |
@@ -566,15 +598,16 @@ salloc -A myproject -p hera -q debug -N 1 -t 30:00 --ntasks-per-node=40
 ```
 
 Packaged applications such as IDL, ImageMagick, MATLAB, and R run on compute
-nodes, not front ends. IDL defaults to 48 threads; set `IDL_THREADS=1` unless it
-owns a node.
+nodes, not front ends. IDL defaults to one thread per virtual CPU — 48 on a Hera node — so
+set `IDL_CPU_TPOOL_NTHREADS=1` for a serial run. IDL needs over 10 GB of memory for many
+workloads, which means `bigmem` or a whole node.
 
 ## Common Gotchas
 
 - No `-A` — RDHPCS rejects the job; the account is mandatory everywhere.
 - `novel` partition without `--qos=novel`, or without a prior help ticket.
 - Compiling on a login node instead of the `service` partition.
-- Writing job output to `/home` — 50 GB quota, and heavy I/O harms it for everyone.
+- Writing job output to `/home` — 30 GB quota on Hera, and heavy I/O harms it for everyone.
 - MPI-IO on Lustre without `I_MPI_EXTRA_FILESYSTEM=on` and `I_MPI_EXTRA_FILESYSTEM_LIST=lustre`; Intel MPI does not detect the file system by default.
 - Running a threaded application with default thread counts on a shared node.
 - Treating `/scratch5/purged` as durable — files untouched for 90 days are deleted.
@@ -607,11 +640,11 @@ Create `skills/hpc-skills/rdhpcs-hera/references/job-scripts.md` (~200 lines) ti
 
 Create `skills/hpc-skills/rdhpcs-hera/references/storage.md` (~150 lines) titled `# Hera Storage Reference`. Sections:
 
-1. **Filesystem overview** — table of `/home`, `/scratch3`, `/scratch4`, `stmp`, `/scratch5`, `/scratch5/purged`, `$TMPDIR`, NESCC-HPSS with quota, backup, and purge columns.
-2. **Quota checks** — `sacccount_params`, `quota`, `lfs quota -u $USER /scratch3`, and snapshot recovery from `/home/$USER/.snapshot/`.
-3. **Purge policy** — `stmp` purged weekly on Mondays for files older than 30 days; `/scratch5/purged` purged for files not accessed in 90 days; other scratch is not purged but never backed up. Include an `lfs find` example for locating aging files and the advice to tar many small files to protect the file-count quota.
+1. **Filesystem overview** — table of `/home`, `/scratch3`, `/scratch4`, `stmp`, `/scratch5`, `/scratch5/purged`, `$TMPDIR`, NESCC-HPSS with quota, backup, and purge columns. Scratch paths follow the documented layout `/scratch[3,4]/<portfolio>/<project>/<user>`.
+2. **Quota checks** — `saccount_params` (Hera and Orion only; prints home quota in MB, per-project scratch usage and file counts), `quota -Qs`, and snapshot recovery from `/home/$USER/.snapshot/`.
+3. **Purge policy** — `stmp` purged weekly on Mondays for files older than 30 days; `/scratch5/purged` purged for files not accessed in 90 days; other scratch is not purged but never backed up. Include a `find … -atime +25` example for locating aging files and the advice to tar many small files to protect the file-count quota (`saccount_params` reports `Files` against `FileQUota`).
 4. **Hot pools** — the first 1 GB of each file on `/scratch3-4` lands on the SSD hot pool and is mirrored to disk after 10–15 minutes, so reported usage can look doubled; not a quota bug.
-5. **HPSS archiving** — `hsi` put/get, `htar`, `hsrest` for restricted collections, and the rule that archive work runs in the `service` partition because only those front ends hold the external connection.
+5. **HPSS archiving** — `hsi "put <local> <hpss>"` / `hsi "get …"`, `htar -cvf` / `htar -xvf`, `hsi "expls <path>"` and `hsi "expfind -d <days>"` for expiration dates, `module load hpss` (Hera) inside a batch job on the `service` partition, because only those front ends hold the external connection.
 6. **What goes where** — code and configs in `/home`, job I/O in `/scratch3`, long-term data in HPSS, and the prohibition on running jobs against `/home` files or symlinks pointing at `/home`.
 
 - [ ] **Step 6: Write `references/programming-env.md`**
@@ -793,7 +826,7 @@ salloc -A mygpu_project -t 480 -p u1-gh     -q gpuwf --gpus=gh200:1
 salloc -A mygpu_project -t 480 -p u1-mi300x -q gpuwf --gpus=mi300x:2
 ```
 
-9. **`## Storage`** table: `/home/First.Last` 50 GB backed up with `~/.snapshot`; `/scratch3` and `/scratch4` Lustre with project quotas, not backed up; `/scratch5` VAST all-flash where only `rstprod` and `public` hold non-purged project quota and everyone else uses `/scratch5/purged/<First.Last>` from a 250 TB pool with a 90-day not-accessed purge; `$TMPDIR` node-local; NESCC-HPSS for archive.
+9. **`## Storage`** table: `/home/First.Last` 30 GB backed up with `~/.snapshot`; `/scratch3` and `/scratch4` Lustre with project quotas, not backed up; `/scratch5` VAST all-flash where only `rstprod` and `public` hold non-purged project quota and everyone else uses `/scratch5/purged/<First.Last>` from a 250 TB pool with a 90-day not-accessed purge; `$TMPDIR` node-local; NESCC-HPSS for archive.
 10. **`## Modules`** — spack-based layout; `module spider <pkg>` is the search entry point; `module load`/`module list`/`module purge`.
 11. **`## Compilers and MPI`** — table of Intel oneAPI, NVIDIA nvhpc, AMD AOCC and of Intel MPI, HPC-X, OpenMPI. State that RDHPCS measured **HPC-X** as better performing and more stable than Intel MPI on the NDR-200 fabric for communication-intensive benchmarks, so prefer it for GPU MPI work. ROCm targets MI300X; CUDA targets H100 and GH200.
 12. **`## Common Gotchas`** — `-p u1-h100` with no GPU QOS; `gpu` QOS from a project whose name does not begin `gpu-` (use `gpuwf`); omitting `--exclusive` when the job needs a whole node; assuming production x86 binaries run on the ARM `u1-gh` nodes; exceeding the 192 gpu-hour `gpuwf` cap; compiling on a login node; writing job output to `/home`; treating `/scratch5/purged` as durable; a windfall-only project submitting to `batch`.
@@ -953,7 +986,7 @@ Create `skills/hpc-skills/rdhpcs-orion/references/job-scripts.md` (~200 lines) t
 
 - [ ] **Step 5: Write `references/storage.md`**
 
-Create `skills/hpc-skills/rdhpcs-orion/references/storage.md` (~150 lines) titled `# Orion Storage Reference`. Sections: filesystem overview table (10 GB home, `work` 9 PB, `work2` 18 PB with hot pool, `$TMPDIR`, HPSS); quota checks (`lfs quota -u $USER /work`, `quota`, `du -sh $HOME`); nightly home backup and the snapshot path; scratch is neither backed up nor long-term storage; hot-pool double counting on `work2`; HPSS/HSMS archiving from the `service` partition; the `/work/<project>/<user>` directory convention; file-count quota advice (tar small files).
+Create `skills/hpc-skills/rdhpcs-orion/references/storage.md` (~150 lines) titled `# Orion Storage Reference`. Sections: filesystem overview table (10 GB home, `work` 9 PB, `work2` 18 PB with hot pool, `$TMPDIR`, HPSS); quota checks (`saccount_params` — documented on Orion, it prints home quota in MB plus `DiskInUse`/`Quota`/`Files`/`FileQUota` per project directory — `quota`, and `du -sh $HOME`); nightly home backup and the snapshot path; scratch is neither backed up nor long-term storage; hot-pool double counting on `work2`; HPSS/HSMS archiving from the `service` partition; the `/work/<project>/<user>` directory convention; file-count quota advice (tar small files).
 
 - [ ] **Step 6: Write `references/programming-env.md`**
 
