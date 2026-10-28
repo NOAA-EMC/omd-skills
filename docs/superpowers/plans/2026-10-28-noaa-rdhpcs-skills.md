@@ -24,7 +24,7 @@ Every task below implicitly includes this section.
 - No omd MCP tool calls inside any skill. omd was guidance for this conversion, not a runtime dependency.
 - A skill must never reference another skill by path (`../slurm/...`). Say "see the `slurm` skill" in prose. Links inside a skill are relative to its own directory (`references/storage.md`).
 - In a **storage table row for `/home`**, state only that system's own quota value. Put any contrast with the fleet's other quota in prose outside the table, because `test_home_quota_matches_the_system` reads quota tables row by row.
-- Do not modify: `skills/hpc-skills/pbs/`, `NOTICE`, `tests/test_repo_policy.py`, `skills/baseeval-skills/perlmutter-ns-skills/`, `tools/`. The only files outside `skills/hpc-skills/` that change are `README.md` (line 100), `docs/superpowers/plans/`, and `tests/test_rdhpcs_consistency.py`.
+- Do not modify: `skills/hpc-skills/pbs/`, `NOTICE`, `tests/test_repo_policy.py`, `skills/baseeval-skills/perlmutter-ns-skills/`, `tools/`. The only files outside `skills/hpc-skills/` that change are `README.md` (line 100), `CONTRIBUTING.md` (line 25 tier count, Task 10 only), `docs/superpowers/`, and `tests/test_rdhpcs_consistency.py`.
 - `README.md` and `skills/hpc-skills/ATTRIBUTION.md` change in the **same commit** as any skill directory add or delete, or `make policy` fails.
 - Commit after every task, with a `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` trailer.
 
