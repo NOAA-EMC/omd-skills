@@ -1,17 +1,22 @@
 ---
 name: slurm
 description: >
-  Slurm workload manager for HPC batch job scheduling. Use when submitting
-  batch or interactive jobs with sbatch/salloc/srun, monitoring with
-  squeue/sacct/scontrol, cancelling with scancel, writing #SBATCH job scripts,
-  working with job arrays, setting job dependencies, checking fair-share
-  accounting with sacctmgr/sreport, or troubleshooting failed jobs on any
-  Slurm cluster.
-compatibility: Requires access to a Slurm cluster (sbatch, squeue, sacct, sinfo available in PATH).
+  Slurm workload manager for HPC batch job scheduling, including NOAA RDHPCS
+  fleet policy. Use when submitting jobs with sbatch/salloc/srun, monitoring
+  with squeue/sacct/sreport, cancelling with scancel, writing #SBATCH job
+  scripts, choosing RDHPCS QOS tiers (batch, urgent, debug, long, windfall,
+  gpu, gpuwf), respecting login-node and scratch rules on Hera, Ursa, Orion,
+  Hercules, or Gaea, escalating a pending job's QOS with scontrol update, or
+  checking fair-share and file-system quotas with sacctmgr, sacccount_params,
+  or lfs quota.
+compatibility: Requires access to a Slurm cluster (sbatch, squeue, sacct, sinfo available in PATH). RDHPCS systems additionally require CAC/PIV or YubiKey authentication through an RDHPCS bastion and a signed master certificate.
 metadata:
-  version: "1.0"
+  version: "2.0"
   scheduler: slurm
-allowed-tools: Bash(sbatch *) Bash(squeue *) Bash(scancel *) Bash(sinfo *) Bash(sacct *) Bash(salloc *) Bash(srun *) Bash(scontrol *) Bash(sacctmgr *) Bash(sreport *) Read Write
+  facility: rdhpcs
+  source: https://docs.rdhpcs.noaa.gov/queue_policy/policies.html
+  as_of: "2026-10-28"
+allowed-tools: Bash(sbatch *) Bash(squeue *) Bash(scancel *) Bash(sinfo *) Bash(sacct *) Bash(salloc *) Bash(srun *) Bash(scontrol *) Bash(sacctmgr *) Bash(sreport *) Read Write Grep Glob
 ---
 
 # Slurm Workload Manager
@@ -229,3 +234,96 @@ Always load modules inside the job script, not just in your login shell.
 - Monitoring, troubleshooting, scontrol recipes: [references/job-control.md](references/job-control.md)
 - Accounting, fairshare, allocation reporting: [references/accounting.md](references/accounting.md)
 - Copy-paste templates: [assets/templates/](assets/templates/)
+
+## RDHPCS Shared Policy
+
+These rules apply on every NOAA Research and Development High Performance
+Computing System (RDHPCS): Hera, Ursa, Orion, Hercules, Gaea, PPAN, Mercury,
+and Cloud. The per-machine skills restate the values their users need, because
+a skill is installed standalone; this section is the shared reference. Facts
+come from [docs.rdhpcs.noaa.gov](https://docs.rdhpcs.noaa.gov).
+
+### Access
+
+All RDHPCS access is SSH through a site bastion, authenticated with a CAC/PIV
+card or a YubiKey:
+
+```text
+<system>-mfa.princeton.rdhpcs.noaa.gov
+<system>-mfa.fairmont.rdhpcs.noaa.gov
+```
+
+The first login attempt generates a master certificate request that must be
+signed before you get a full session, usually in under five minutes. The
+passphrase protecting that certificate must contain at least three words. If
+you forget it, keep trying — the fourth attempt offers to recreate the master
+certificate.
+
+### QOS reference (Hera and Ursa)
+
+Specify with `--qos=<name>` or `#SBATCH --qos=<name>`.
+
+| QOS | Max walltime | Max cores | Billing TRES | Limits |
+|-----|-------------|-----------|--------------|--------|
+| `batch` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 1 | Default QOS for projects with more than a windfall-only allocation |
+| `urgent` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 2 | One pending and one running job per project. FairShare drops at twice the batch rate; below FairShare 0.45 the job is silently changed to `batch` |
+| `debug` | 30 mins | 8400 (Hera) / 14400 (Ursa) | 1.25 | Two jobs per user. Highest priority; not for general fast-turnaround work |
+| `long` | 16 hours | 4200 (Hera) / 7296 (Ursa) | 1 | Normal priority for 8 to 16 hour jobs |
+| `windfall` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 0 | Lowest priority, charges nothing, does not lower FairShare |
+| `gpu` | 168 hours | 20 GPUs (Ursa `u1-h100`) | 1 | Requires a project whose name begins `gpu-` with allocation 2 or larger |
+| `gpuwf` | 48 hours | 10 GPUs (`u1-h100`) / 8 GPUs (`u1-gh`, `u1-mi300x`) | 0 | Windfall GPU access, open to every Ursa project; at most 192 gpu-hours running per project |
+
+A project with a **windfall-only** allocation (monthly allocation of 1) may
+submit only to `windfall` or `gpuwf`.
+
+**Job caps, every QOS on Hera and Ursa:** 1500 total jobs (pending plus
+running) per project or account, and jobs beyond that are **rejected at submit
+time**, not queued; 400 running jobs per project; only 20 jobs per project
+gain age priority.
+
+### Change a pending job's QOS
+
+Start cheap and escalate only if the job will not start — RDHPCS recommends
+this to protect FairShare:
+
+```bash
+sbatch --qos=windfall job.sh                  # submit at no cost
+scontrol update job 26866,26867 qos=batch     # promote now
+echo "scontrol update job 26990 qos=batch" | at -M now +5min   # promote if still pending
+```
+
+Never schedule an `at` time below 120 seconds. On Orion and Hercules `at`
+exists only on `login1`. A job moved to a QOS it does not qualify for stays
+pending forever rather than failing.
+
+### Login nodes
+
+Login (front end) nodes are shared and are **not** for computation: no
+compiling, no parallel or threaded runs, no long I/O. Use the `service`
+partition instead, which runs on nodes with external network and HPSS access.
+Exceptions are covered by the RDHPCS Login Node Usage Policy.
+
+### Recurring work
+
+Prefer `scrontab` over `cron`. Where `cron` exists it is limited to specific
+front ends (Orion `orion-login-1`, Hercules `hercules-login-1`; Mercury runs
+its own CRON service).
+
+### File systems
+
+| Rule | Value |
+|------|-------|
+| Home quota | 50 GB per system at `/home/First.Last`, except MSU-HPC Orion and Hercules at 10 GB |
+| Home backed up | Yes, nightly, plus per-day snapshots in `~/.snapshot` |
+| Scratch backed up | **No** — scratch is not backed up and must never be treated as long-term storage |
+| Scratch purged | Not purged, except `stmp` on `/scratch3-4` (weekly, Monday, files older than 30 days) and `/scratch5/purged` (files not accessed in 90 days) |
+| Long-term archive | NESCC-HPSS or GFDL-DMF only |
+| Check quota | `sacccount_params`, `quota`, or `lfs quota -u $USER <path>` |
+
+Do not run jobs against files in `/home`, including through symlinks that
+point at scratch. It degrades the home file system for every user on the
+system.
+
+On `/scratch3-4` the first 1 GB of each file is written to a solid-state hot pool
+and mirrored to disk 10 to 15 minutes later, so reported usage for an active
+file can look **doubled**. That is expected, not a quota bug.
