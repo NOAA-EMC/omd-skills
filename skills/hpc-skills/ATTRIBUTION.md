@@ -11,6 +11,7 @@ Skills included:
 - `frontier` — OLCF Frontier (Slurm, AMD MI250X GPUs with ROCm/HIP, Cray programming environment)
 - `pbs` — PBS/OpenPBS batch job scheduling on any PBS cluster
 - `perlmutter` — NERSC Perlmutter (Slurm, CPU vs GPU nodes, QOS tiers, NERSC allocations)
+- `rdhpcs-cloud` — NOAA RDHPCS Cloud on Parallel Works (on-demand clusters, on-prem access, storage and cost governance)
 - `rdhpcs-gaea` — NOAA RDHPCS Gaea at ORNL NCCS (Slurm federation, C5/C6/C7 generations, GPFS F5/F6/F7)
 - `rdhpcs-hera` — NOAA RDHPCS Hera (Slurm, E4-node shape, fleet QOS policy)
 - `rdhpcs-hercules` — NOAA RDHPCS Hercules at MSU-HPC (Slurm, 80-core nodes, MSU accounts)

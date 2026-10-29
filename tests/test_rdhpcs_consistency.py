@@ -26,6 +26,7 @@ MACHINE_SKILLS: dict[str, str] = {
     "rdhpcs-gaea": "gaea",
     "rdhpcs-ppan": "ppan",
     "rdhpcs-mercury": "mercury",
+    "rdhpcs-cloud": "cloud",
 }
 
 # QOS columns that machine skills must agree with when they publish them.
