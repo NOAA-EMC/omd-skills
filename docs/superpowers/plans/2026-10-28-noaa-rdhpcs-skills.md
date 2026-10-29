@@ -1337,14 +1337,16 @@ Create `skills/hpc-skills/rdhpcs-ppan/SKILL.md`. Frontmatter:
 ```markdown
 ---
 name: rdhpcs-ppan
-description: >
-  NOAA RDHPCS PPAN analysis and post-processing cluster at GFDL. Use when
-  writing Slurm job scripts for PPAN, targeting the pp0xx post-processing hosts
-  or the interactive analysis hosts, working with the CXFS-mounted /archive and
-  /work filesystems, checking archive quotas with archrpt, running
-  post-processing for a Gaea model run, finding /home, /nbhome, /vftmp, /ptmp,
-  or /net storage, or using Podman on PPAN.
-compatibility: Script-authoring skill; no login required. Access is through a GFDL account and the RDHPCS bastion, and typically accompanies a Gaea allocation.
+description: >-
+  NOAA RDHPCS PPAN (Pan) post-processing and analysis cluster at GFDL in
+  Princeton. Use when writing Slurm job scripts for PPAN, choosing the batch,
+  stage, workflow, dask, hpetest, or gpu partition, targeting the an* analysis
+  hosts or pp* post-processing hosts across mixed Xeon generations, running
+  post-processing for a Gaea model run, working with the tape-backed /archive
+  and CXFS /work filesystems, using /vftmp, $TMPDIR, /ptmp, /nbhome, or /net
+  storage, checking quotas with homeuse, quotause, or archrpt, recalling tape
+  files with dmget, or transferring files with gcp.
+compatibility: Script-authoring skill; no login required. Access is through GFDL credentials and the RDHPCS bastion with CAC or YubiKey, and typically accompanies a Gaea allocation.
 metadata:
   version: "1.0"
   system: ppan
@@ -1358,27 +1360,28 @@ allowed-tools: Read Write Grep Glob
 
 Body sections with exactly these facts:
 
-1. **`# PPAN — NOAA RDHPCS at GFDL`** — the Geophysical Fluid Dynamics Laboratory analysis and post-processing cluster; about 130 Dell hosts, roughly 20 analysis hosts for interactive use and roughly 100 post-processing hosts named `pp006`, `pp317`, and so on, scheduled by Slurm.
-2. **`## System Overview`** table: ~130 Dell hosts; Intel Xeon generations from Sandy Bridge through Ice Lake; 48 to 512 GB per host; CXFS high-performance interface to `/archive` and `/work`; Slurm.
-3. **`## What PPAN Is For`** — interactive analysis and the post-processing of model output. Slurm lets a Gaea job submit post-processing work here, so a Gaea workflow commonly ends with a PPAN job rather than a Gaea one.
-4. **`## Critical Requirements`** — `-A <account>` mandatory; set `-t`; host generations differ widely, so pin what you need with `--constraint` instead of assuming a uniform instruction set; write output to `/work` or `/archive`, not `/home`.
-5. **`## Partitions and QOS`** — PPAN is a GFDL cluster with its own queue configuration. Discover it rather than assuming RDHPCS fleet names:
+1. **`# PPAN — NOAA RDHPCS at GFDL`** — "Post Processing and Analysis (PPAN)" (also called **Pan**), a small cluster of **over 130 Dell servers at the Geophysical Fluid Dynamics Laboratory (GFDL) in Princeton, NJ**, scheduled by Slurm. About **20 analysis hosts** (`an*`) for interactive use and about **100 post-processing hosts** (`pp*`, e.g. `pp006`, `pp317`). It supports GFDL's science community by analyzing and interpreting models generated on other HPC systems — **Slurm lets models running on Gaea submit post-processing jobs here** — and hosts software packages including MATLAB and Python/R stacks.
+2. **`## System Overview`** — multiple petabytes of disk plus **access to nearly 200 PB of archive storage**. The overview blurb says "Sandy Bridge to Ice Lake, 48–512 GB", but the host tables are the authority: analysis hosts run **nehalem/westmere/sandybridge/broadwell/skylake/icelake/Emerald Rapids** (101 GB up to **4,328 GB** on `an208`–`an212`); post-processing hosts are 8–24 CPUs at 51–540 GB. CXFS gives the analysis hosts high-performance access to `/archive` and `/work`. Slurm is used from any analysis host; login to analysis auto-runs `module load slurm`.
+3. **`## What PPAN Is For`** — interactive analysis and post-processing of model output; a Gaea workflow commonly ends with a PPAN job. Login: `ssh` with CAC or YubiKey; from GFDL workstations `setup-CAC` enables further logins without re-auth, and YubiKey users run `ssh analysis`.
+4. **`## Critical Requirements`** — set `-t`; write model output to `/work` (or archive it), never `/home` (10 GB quota); pin host generations deliberately — **the guide documents partitions and per-host AVX levels, not `--constraint`** — because pp hosts range from no-AVX 8-core boxes to AVX-512 24-core boxes; always `module load <module>/<version>` with the version in batch scripts (fleet modules guidance: silent default-version changes break reproducibility).
+5. **`## Partitions`** — from the guide's post-processing host table: `workflow` (`pp[008-010]`), `hpetest` (`pp[013-014]`), `dask` (`pp[017-026]`), `batch/stage` (the bulk — `pp[027-066,068,072-074]`, `pp[101,104,105]`, `pp[200-212]`, `pp[300-343]`), and `gpu` (`pp[400-401]`). The guide gives no wall-time/QOS table for PPAN; use the fleet discovery commands:
 
    ```bash
-   sinfo -o "%P %a %D %C %l"
+   sbatch-limits          # fleet tool: limits + permitted partition/QOS combinations
+   sinfo                  # live partition/node state
    sacctmgr show qos format=Name,MaxWall
    ```
 
-   Do not create a table with `Max walltime` or `Billing TRES` headers here.
-6. **`## Minimal Job Script`** — a post-processing script using `-N 1`, `-t`, output under `/work/<project>/<user>`, and a `--constraint=<gen>` comment explaining that host generations vary.
-7. **`## Storage`** table listing `/home`, `/nbhome`, `/archive`, `/vftmp` and `$TMPDIR`, `/work`, `/ptmp`, `/net`, `/net2`, `/net3` with a one-line purpose each: `/home` small persistent workspace; `/nbhome` non-backed-up home; `/archive` the near-200 PB CXFS archive; `/work` active project work; `/vftmp` and `$TMPDIR` scratch; `/ptmp` parallel temporary space; `/net`, `/net2`, `/net3` net filesystem areas.
-8. **`## Archive Quotas`** — `archrpt` produces archive reports and shows group and user quotas on `/archive`.
-9. **`## Common Gotchas`** — assuming a uniform CPU generation across `pp0xx` hosts; using `/home` for model output; treating `/nbhome` or `/vftmp` as backed up; skipping `archrpt` before a large archive write; expecting RDHPCS Hera/Ursa QOS names on a GFDL cluster.
+   Do not create a table with `Max walltime` or `Billing TRES` headers, and do not assume Hera/Ursa QOS names. Local queue views: `qa`/`qi`/`qr`/`qc`/`qj <jobid>`/`qn an|pp`.
+6. **`## Minimal Job Script`** — a post-processing script using `-p batch`, `-N 1`, `-t`, output under `/work/<project>/<user>`, and a comment noting host generations differ (pick a partition/AVX class that fits).
+7. **`## Storage`** table listing `/home` (backed up **daily**, 10 GB), `/nbhome` (backed up **weekly** — "no-backup" is the name, not the policy; 10 GB), `/archive` (GFDL **tape** archive via CXFS; read/write on the analysis cluster, read-only on workstations; ~200 PB), `/work` (large long-term scratch, not backed up, read-only on workstations), `/vftmp` + `$TMPDIR` (node-local fast scratch, 8–44 TB, not backed up), `/ptmp` (staging for FRE post-processing, not backed up), `/net`, `/net2`, `/net3` (GFDL workstation filesystems ≥100 GB; `/net` backed up, `/net2`//`/net3` not; **not mounted on post-processing nodes** — use `gcp`). Quota commands: `homeuse` (not `quota -vs`) for `/home`+`/nbhome`, `quotause` for `/work`, `archrpt -s` / `archrpt -r <group>` for archive allocations.
+8. **`## Archive`** — `/archive` behaves like a filesystem but data lives on tape until recalled: `dmget <files>`, `dmwho`, `dmls -l`; copy to `/vftmp` before heavy use; **large files only** — tar/cpio small files together; `dmlocate <pattern>` searches a daily-updated filename database; allocations are set by the GFDL director/group leaders and enforced administratively.
+9. **`## Common Gotchas`** — assuming a uniform CPU generation across `pp*` hosts; using `/home` for model output (10 GB); treating `/nbhome` as unbacked-up (it is weekly) or `/vftmp`//`/work` as durable; skipping `archrpt` before a large archive write; opening many tape-resident files without `dmget` first; expecting RDHPCS fleet QOS names on a GFDL cluster; the guide's own Slurm gotchas: `-o` pointing at a directory makes the job fail immediately with `NonZeroExitCode`; without `-D dir` the job runs in the submission directory and falls back to `/tmp` if that path is absent on the execution host; output appears in the logfile only after each line completes; scripts not ending in a newline lose their last line.
 10. **`## Additional Resources`** — link to `references/storage.md`, plus the PPAN guide URL.
 
 - [ ] **Step 4: Write `references/storage.md`**
 
-Create `skills/hpc-skills/rdhpcs-ppan/references/storage.md` (~140 lines) titled `# PPAN Storage Reference`. Sections: filesystem table for all nine paths with purpose, backup status, and expected lifetime; CXFS mount behavior and why archive I/O belongs on the post-processing hosts; `archrpt` usage for group and user quota reports; guidance on staging Gaea output into `/archive` and cleaning `/work` and `/vftmp`; the `/nbhome` versus `/home` backup distinction; tape-archive conventions at GFDL (GFDL-DMF).
+Create `skills/hpc-skills/rdhpcs-ppan/references/storage.md` (~150 lines) titled `# PPAN Storage Reference`. Sections: filesystem table for all nine paths with purpose, backup cadence, and quota command; the `/home` versus `/nbhome` daily-vs-weekly distinction and the `homeuse`/`homerpt` commands; `/archive` tape behavior — `dmget`/`dmwho`/`dmls`, `dmlocate`, the large-files-only/tar convention, `archrpt` group/user allocations enforced administratively; mount polarity table (analysis hosts vs GFDL workstations vs post-processing nodes) and `gcp` for `/net[23]` access from analysis sessions (`module load gcp`; not mounted on pp nodes at all); `/vftmp` sizes (8–37 TB analysis, mostly 8 TB pp, "bigvftmp" 27/44 TB), `$TMPDIR` = `/vftmp/<user>/pbs<jobid>` in batch and `pid<pid>` interactively, removed at session end; `/work` (`quotause`) and `/ptmp` (FRE staging) cautions.
 
 - [ ] **Step 5: Run test to verify it passes**
 
