@@ -306,7 +306,11 @@ main failure mode:
 
 - ~130 Dell hosts at GFDL: ~20 analysis hosts for interactive use, ~100
   post-processing hosts named `pp006`, `pp317`, etc., under Slurm.
-- Intel generations Sandy Bridge → Ice Lake, 48–512 GB.
+- The overview blurb says "Sandy Bridge to Ice Lake, 48–512 GB"; the host
+  tables are the authority — analysis hosts run `nehalem` through `Emerald
+  Rapids` (101 GB to 4,328 GB), post-processing hosts are 8–24 CPUs at
+  51–540 GB, and the table marks AVX support per host rather than advertising
+  `--constraint` values.
 - CXFS high-performance interface to `/archive` and `/work`; file systems
   `/home`, `/nbhome`, `/archive`, `/vftmp` and `$TMPDIR`, `/work`, `/ptmp`,
   `/net`, `/net2`, `/net3`.
@@ -329,7 +333,10 @@ main failure mode:
 - Visibility rules: `/home` is **not** accessible from DTNs; `/collab2/data`
   is accessible from both DTNs and uDTNs; `/collab2/data_untrusted` is
   accessible only from uDTNs.
-- `/collab2` is Mercury's HPFS-scratch.
+- `/collab2` is Mercury's Lustre scratch (per the storage tables): not backed
+  up, 60 TB with a 60-day access-time purge under `data`, 20 TB with a 14-day
+  purge under `data_untrusted`; the uDTN renames `data_untrusted/$USER` to
+  `/collab2/$USER` and applies its own 5-day purge.
 - CRON services and HPSS access documented for this system.
 
 ### 7.8 rdhpcs-cloud
@@ -340,7 +347,10 @@ main failure mode:
   VS Code from a compute node.
 - Storage types and costs: Lustre, bucket/block blob storage, `contrib` file
   system; cost calculator; usage reports.
-- Quota warning messages forwarded from on-prem systems.
+- The quota failure runs the other way: Parallel Works copies programs and
+  data into `$HOME/pw` **on the on-prem system it is driving** (the guide's
+  example is the VS Code workflow on Hera), so the fix is to move `$HOME/pw` to
+  project space and symlink it back.
 
 ## 8. Error handling
 
