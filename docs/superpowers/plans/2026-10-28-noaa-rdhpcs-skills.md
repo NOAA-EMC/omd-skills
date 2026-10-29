@@ -1214,7 +1214,7 @@ Body sections, in order, with exactly these facts:
    |---------|-------|-----|----------------|-----------------|------|-----|------|--------------|
    | C5 | 1,920 | 2× AMD EPYC 7H12 2.6 GHz 64-core | 128 | 256 GB | 8 | AVX-2 | 10.22 PF | 2× Slingshot 100 Gbps |
    | C6 | 2,048 | 2× AMD EPYC 9654 2.4 GHz 96-core | 192 | 384 GB | 8 | AVX-512 | 15.1 PF | 1× Slingshot 200 Gbps |
-   | C7 | 1,208 | 2× AMD EPYC 9965 2.0 GHz 192-core (Zen 5c Turin) | 384 | 768 GB | 4 | AVX-512 | 29 PF | 1× Slingshot-11 200 Gbps |
+   | C7 | 1,208 | 2× AMD EPYC 9965 2.0 GHz 192-core (Zen 5c Turin) | 384 | 768 GB | 4 | AVX-512 | 29 PF | 1× Slingshot 200 Gbps |
 
    Then state plainly that **login nodes are a separate set with different core counts and memory** (`gaea5[1-6]` 128 cores / 512 GB, `gaea6[1-6]` 192 cores / 512 GB, `gaea7[1-6]` **320 cores** / 1.6 TB) and must never be quoted as compute-node specs. OS: Cray OS 3.1.0-28 (SLES 15.5) on C5 and C6, **RHEL 9.8 "Plow"** on C7; discover versions with `cat /opt/cray/etc/release/cos-base` and `lsb_release -a`.
 3. **`## Critical Requirements`** — `-A <projectID>` mandatory; **`-M <cluster>` selects the Slurm cluster** because Gaea is a Slurm **federation** of `c5`, `c6`, `c7`, and `es`, and scheduler commands default to the cluster you are standing on; the GPFS area must match the cluster (`/gpfs/f5` for C5, `/gpfs/f6` for C6, `/gpfs/f7` for C7).
