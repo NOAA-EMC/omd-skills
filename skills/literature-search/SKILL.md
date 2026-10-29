@@ -1,6 +1,6 @@
 ---
 name: literature-search
-description: Search scientific literature across arXiv, PubMed, Semantic Scholar, and Google Scholar. Use when finding papers, reviewing research topics, building bibliographies, or exploring citation networks.
+description: Search scientific literature across arXiv, PubMed, Semantic Scholar, Google Scholar, and Earth-system-modeling and geoscience journals. Use when finding papers, reviewing research topics, building bibliographies, or exploring citation networks.
 ---
 
 # Scientific Literature Search
@@ -15,6 +15,7 @@ Use this skill when you need:
 - **Citation analysis** to find foundational and recent work
 - **Bibliography generation** in BibTeX, APA, or other formats
 - **Related work** for a paper or grant proposal
+- **Earth-system-modeling literature** — GCM, cryosphere, ocean, and climate venues
 
 ## Core Workflow
 
@@ -55,6 +56,8 @@ Generate citations in requested format (BibTeX, APA, markdown table).
 | PubMed | Biomedicine, Life Sciences | `site:pubmed.ncbi.nlm.nih.gov` |
 | Semantic Scholar | Cross-domain, citations | `site:semanticscholar.org` |
 | Google Scholar | Broad coverage | Direct search |
+| Copernicus / AMS / AGU journals | Earth system modeling, climate | `site:gmd.copernicus.org` |
+| OpenAlex | Journal metadata, ISSN lookups | `api.openalex.org` |
 
 ## Additional Resources
 
@@ -68,3 +71,5 @@ Generate citations in requested format (BibTeX, APA, markdown table).
 - PubMed: https://pubmed.ncbi.nlm.nih.gov
 - Semantic Scholar: https://www.semanticscholar.org
 - Connected Papers: https://www.connectedpapers.com
+- OpenAlex: https://openalex.org
+- NASA ADS: https://ui.adsabs.harvard.edu
