@@ -22,7 +22,8 @@ Skills are organized by domain in the `skills/` directory:
 - **BaseEval (8):** `skills/baseeval-skills/` for language-model evaluation
   workflows (lm-evaluation-harness configuration, running NeMo-Skills on
   Perlmutter, and distilling a run into a model card)
-- **HPC (5):** `skills/hpc-skills/` for Slurm, PBS, and leadership-computing systems
+- **HPC (10):** `skills/hpc-skills/` for Slurm, PBS, and the NOAA RDHPCS systems
+  (Hera, Ursa, Orion, Hercules, Gaea, PPAN, Mercury, Cloud)
 - **BaseData (5):** `skills/basedata-skills/` for Croissant, HDMF, data
   cards, Well conversion, and skill authoring
 - **Plasma Simulation (2):** `skills/plasma-sim-skills/` for GS2 and Gkeyll
