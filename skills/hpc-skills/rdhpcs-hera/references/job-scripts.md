@@ -215,8 +215,9 @@ means `bigmem` or a whole node.
 ## HPSS Staging Job
 
 Only `service` partition nodes hold the external connection, so archive traffic runs
-there. Maximum 4 cores and 24 hours. RDHPCS's sample staging job asks for one task, half an
-hour, and `windfall` so the transfer costs nothing:
+there. Maximum 4 cores and 24 hours. Compute nodes cannot reach HPSS at all. RDHPCS's
+sample staging job asks for one task, half an hour, and `windfall` so the transfer
+costs nothing:
 
 ```bash
 #!/bin/bash
@@ -235,16 +236,19 @@ module load hpss
 #   module use /usw/hpss/modulefiles && module load hsi
 
 cd /scratch3/<user>/staging
-hpssdir=/1year/PORTFOLIO/project/User.Id
+hpssdir=/<PORTFOLIO>/<project>/1year/<User.Id>
 
-# Retrieve a file from HPSS
-hsi "get $hpssdir/mydata.nc mydata.nc"
+# Retrieve a file from HPSS -- local path first, colon, then the HPSS path
+hsi "get mydata.nc : $hpssdir/mydata.nc"
 
-# Or push a directory out, packaged as a tar
-htar -cvf $hpssdir/results.tar ./results/
+# Or push a directory out, packaged as a tar (-P creates the remote directory path)
+htar -P -cvf $hpssdir/results.tar ./results/
 ```
 
-`hsi cput` and `hsi cget` do the same for whole directory trees.
+HPSS keeps a
+single copy and overwrites targets without warning, so check the destination with
+`hsi "ls -l $hpssdir"` before writing over anything, and check expiry with
+`hsi "expfind -d 30 $hpssdir"`.
 
 ---
 

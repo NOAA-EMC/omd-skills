@@ -172,11 +172,17 @@ salloc -A mygpu_project -t 480 -p u1-mi300x -q gpuwf --gpus=mi300x:2
 | Home | `/home/First.Last` | 30 GB | Yes, plus `~/.snapshot` | Code and configs — never job I/O |
 | Scratch | `/scratch3`, `/scratch4` | project-based (Lustre) | **No** | Job input and output |
 | VAST scratch | `/scratch5` | project quota for `rstprod` and `public`; `/scratch5/purged/<First.Last>` for everyone else | **No** | All-flash experimental area, 250 TB pool, 90-day purge |
-| Archive | NESCC-HPSS via `hsi` / `htar` | portfolio-managed | Yes | Long-term retention |
+| Archive | NESCC-HPSS via `hsi` / `htar` | portfolio-managed | **No — single copy, deleted on retention expiry** | Long-term retention only if you can also keep a second copy |
 
 `/scratch5/purged/<First.Last>` must be named exactly like your NOAA `First.Last`. `stmp` on
 `/scratch3-4` is purged every Monday for files older than 30 days. Scratch is never backed
 up. Do not run jobs against files in `/home`.
+
+`hsi put` and `hsi get` take the **local path first**, then a colon, then the HPSS
+path — not FTP order. Load the client with `module load hpss`; it is not loaded by
+default, and only `u1-service` nodes can reach HPSS. Files over 3 TB fail to store.
+See [references/storage.md](references/storage.md) for the full syntax, the HTAR
+limits, and how to check what is about to expire.
 
 ## Modules
 

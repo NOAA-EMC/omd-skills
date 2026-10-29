@@ -114,8 +114,29 @@ is `htar`.
 
 - **CRON services are available on Mercury** for scheduled work, such as recurring
   transfers.
-- **HPSS is accessible** from Mercury; see the NESCC HPSS documentation for the
-  archive commands.
+- **HPSS is accessible** from Mercury, and RDHPCS's own staging-job sample names
+  Mercury's `service` partition as the place archive traffic runs. Load the client
+  first — it is not loaded by default:
+
+  ```bash
+  module load hpss
+  hsi "put /collab2/data/results.tar : /<PORTFOLIO>/<project>/1year/<User.Id>/results.tar"
+  hsi "get /<PORTFOLIO>/<project>/1year/<User.Id>/results.tar"
+  ```
+
+  Note the argument order: `hsi put` and `hsi get` take the **local path first**,
+  then a colon, then the HPSS path — not FTP order. `htar` bundles a directory tree
+  in one step and has its own limits (68 GB per member, 154-character paths,
+  99-character filenames).
+- HPSS holds a **single copy** with no backup and no recovery, overwrites targets
+  without warning, refuses files over 3 TB, and deletes data when its retention
+  pool expires. Access does not follow from a compute project — request it from
+  `rdhpcs.hpss.help@noaa.gov`. Full syntax and expiry checks are in the `slurm`
+  skill's RDHPCS Archive Storage Reference.
+- RDHPCS's pages disagree about whether Mercury reaches HPSS: the archive page
+  lists it, the getting-started page omits it. The sample job above and Mercury's
+  own user guide both say it is accessible, but confirm with help before building
+  a workflow on it.
 - Mercury carries only a **minimal software stack** for compiling and running
   programs, because it exists for data movement. Open a help ticket if you need
   something specific there.

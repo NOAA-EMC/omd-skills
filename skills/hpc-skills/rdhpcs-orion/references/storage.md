@@ -143,6 +143,11 @@ writing an archive script for Orion, confirm the approved commands and the corre
 `module load` line with the help system at `rdhpcs.orion.help@noaa.gov`. The
 default long-term path for Orion data is Niagara, not HPSS.
 
+If HPSS help does confirm access for Orion, the argument order, size limits,
+retention pools, and expiry checks for `hsi` and `htar` are in the `slurm`
+skill's RDHPCS Archive Storage Reference — note in particular that `hsi put` and
+`hsi get` take the local path first, colon-separated, which is not FTP order.
+
 ---
 
 ## What Goes Where

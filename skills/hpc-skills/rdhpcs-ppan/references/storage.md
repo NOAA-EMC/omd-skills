@@ -11,7 +11,7 @@ commands, the tape workflow, and `gcp` transfers.
 |---|---|---|---|
 | `/home` | persistent home, unified between workstations and the analysis cluster | daily | `homeuse` |
 | `/nbhome` | supplemental "no-backup" home | weekly | `homeuse` |
-| `/archive` | GFDL tape archive filesystem | on tape | `archrpt -s` |
+| `/archive` | GFDL tape archive filesystem | **No — single tape copy**, but no retention expiry | `archrpt -s` |
 | `/work` | large long-term scratch | no | `quotause` |
 | `/vftmp` | fast scratch local to each host | no | — |
 | `$TMPDIR` | per-job or per-session directory under `/vftmp` | no | — |
@@ -44,16 +44,23 @@ with no options for its usage message.
 
 ## `/archive`: A Tape Filesystem
 
-`/archive` is the GFDL tape archive filesystem. It behaves like any other
+`/archive` is the GFDL tape archive filesystem, based on HPE's Data Management
+Framework (DMF): 13.1 PB of front-end disk cache, 5 tape libraries, 160+ tape
+drives, 360 PB total capacity. It behaves like any other
 filesystem except that file data lives on tape until recalled to disk, and files
 are recalled automatically when opened. It is mounted **read/write on the
 analysis cluster** and **read-only on GFDL workstations**.
+
+Your archive area is `/archive/$USER`, which is a **symbolic link** into
+`/arch[0-8bcfgh]/$USER`. Those split targets exist to spread the load across the
+front-end cache drives, so do not hard-code one; always use `/archive/$USER`.
 
 When many files are needed, recall them explicitly first (`dm` stands for Data
 Migration; these commands run on the analysis cluster and on workstations):
 
 ```bash
 dmget <files>          # recall files from tape
+dmput <files>          # write files to tape
 dmwho                  # show pending dmgets with wait times
 dmls -l <files>        # show file state (disk or tape residence)
 ```
@@ -63,6 +70,24 @@ before working on them.
 
 `/archive` is intended for **large files only**. To save small files, combine
 related files into a single tar or cpio archive and store that larger file.
+
+### Retention and recovery
+
+Unlike NESCC-HPSS, files in the GFDL archive have **no set retention policy** —
+GFDL divisions and users decide how long to keep data. Nothing is deleted on a
+schedule, but nothing is backed up beyond its single tape copy either, so remove
+data you no longer need to keep space available for everyone.
+
+If an archive tape is damaged, RDHPCS staff work with the manufacturer to
+recover it, and very rarely cannot. If your files are unrecoverable, you may pay
+an outside recovery service and RDHPCS will handle the shipping and coordination.
+That is the only escalation path — plan accordingly for data you cannot afford to
+lose.
+
+Only GFDL users get a personal archive directory. Other RDHPCS users reach
+long-term storage through HPSS, and GFDL users can transfer data to HPSS from any
+RDHPCS system using the **Princeton DTN** or the **Princeton Globus endpoint**.
+Archive help: `oar.gfdl.help@noaa.gov`.
 
 A `locate`-style database of `/archive` pathnames is updated daily:
 

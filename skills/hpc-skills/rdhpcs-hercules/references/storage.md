@@ -179,6 +179,11 @@ the systems, that advice effectively applies to Hercules data as well: the defau
 long-term path is Niagara, not HPSS. Access to Niagara requires an active RDHPCS
 account in addition to your MSU account.
 
+If HPSS help does confirm access for Hercules, the argument order, size limits,
+retention pools, and expiry checks for `hsi` and `htar` are in the `slurm`
+skill's RDHPCS Archive Storage Reference — note in particular that `hsi put` and
+`hsi get` take the local path first, colon-separated, which is not FTP order.
+
 ---
 
 ## What Goes Where

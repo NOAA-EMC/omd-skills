@@ -144,6 +144,7 @@ recalled:
 
 ```bash
 dmget <files>       # recall files to disk
+dmput <files>       # write files to tape
 dmwho               # what is waiting on you
 dmls -l             # list with status flags
 dmlocate <pattern>  # search a daily-updated filename database
@@ -151,8 +152,11 @@ archrpt -s          # your archive usage
 archrpt -r <group>  # group allocation report
 ```
 
-Copy recalled files to `/vftmp` before heavy use. The archive holds **large
-files only** — tar or cpio small files together before archiving. Archive
+Copy recalled files to `/vftmp` before heavy use. `/archive/$USER` is a symlink
+into `/arch[0-8bcfgh]/$USER`, so never hard-code the target. The archive holds
+**large files only** — tar or cpio small files together before archiving. There
+is **no set retention policy**, so nothing expires on a schedule, but each file
+exists in a single copy on tape. Archive
 allocations are allocated by the GFDL director to groups, set for individuals by
 group leaders, and enforced administratively rather than by a hard filesystem
 limit, so check `archrpt` before a large write.

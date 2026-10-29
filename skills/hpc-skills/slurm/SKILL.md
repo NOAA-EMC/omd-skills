@@ -233,6 +233,7 @@ Always load modules inside the job script, not just in your login shell.
 - Annotated job script examples: [references/job-scripts.md](references/job-scripts.md)
 - Monitoring, troubleshooting, scontrol recipes: [references/job-control.md](references/job-control.md)
 - Accounting, fairshare, allocation reporting: [references/accounting.md](references/accounting.md)
+- NESCC-HPSS and GFDL DMF archiving syntax and limits: [references/storage.md](references/storage.md)
 - Copy-paste templates: [assets/templates/](assets/templates/)
 
 ## RDHPCS Shared Policy
@@ -325,7 +326,7 @@ relying on it.
 | Home backed up | Yes, regularly, plus per-day snapshots in `~/.snapshot` |
 | Scratch backed up | **No** — scratch is not backed up and must never be treated as long-term storage |
 | Scratch purged | Not purged, except `stmp` on `/scratch3-4` (weekly, Monday, files older than 30 days) and `/scratch5/purged` (files not accessed in 90 days) |
-| Long-term archive | NESCC-HPSS or GFDL-DMF only |
+| Long-term archive | NESCC-HPSS or GFDL-DMF only — **single copy, no backup, no recovery** |
 | Check quota | `quota -Qs` on Gaea, Ursa, Hera and Mercury; `homeuse` on Pan; `saccount_params` on Hera and Orion only |
 | Check fairshare | `sfairshare` on Hera only; `saccount_params` (Hera, Orion) reports per-project fairshare elsewhere |
 
@@ -342,3 +343,35 @@ system.
 On `/scratch3-4` the first 1 GB of each file is written to a solid-state hot pool
 and mirrored to disk 10 to 15 minutes later, so reported usage for an active
 file can look **doubled**. That is expected, not a quota bug.
+
+### Archiving
+
+HPSS and GFDL DMF keep **one copy** of a file. Nothing is backed up and nothing
+is recoverable after deletion, and `hsi` `put`, `get`, and `mv` overwrite the
+target without warning. Archive only what costs more to regenerate than to
+store — HSMS is explicitly not an infinite resource and quotas are being
+enabled.
+
+Compute nodes cannot reach HPSS. Transfers run on a front end or on the service
+partition (`service` on Hera and Mercury, `u1-service` on Ursa, `dtn_f5_f6` on
+Gaea). Load the tools first: `module load hpss`, or on Gaea
+`module use /usw/hpss/modulefiles` then `module load hsi`.
+
+The argument order of `hsi put` and `hsi get` is **not** FTP's — the local
+pathname comes first, separated from the HPSS pathname by a colon:
+
+```bash
+hsi "put /home/user/work/run.nc : /BMC/GEFS_D/5year/user/run.nc"
+hsi "get /BMC/GEFS_D/5year/user/run.nc"
+```
+
+Files over **3 TB fail to store**; keep single files at or under 1 TB and
+bundle small files with `htar`. Data is filed under a retention pool
+(`1year`–`5year` or `permanent`) that sets an expiration date, and expired
+files are deleted. Check `hsi "expfind -d 30"` rather than assuming your data
+is permanent.
+
+HPSS access is not granted by joining a compute project — request it from
+`rdhpcs.hpss.help@noaa.gov`. Full syntax, limits, batch-job template, GFDL DMF
+commands, and the documentation contradictions to verify first:
+[references/storage.md](references/storage.md).

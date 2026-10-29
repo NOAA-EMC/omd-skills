@@ -108,6 +108,48 @@ fleet Globus Connect / data-transfer pages). Firewall exceptions for external
 transfers are requested through the help desk under the fleet's firewall
 modification process.
 
+## Archiving to NESCC-HPSS
+
+Gaea is one of the documented HPSS sites, but it reaches HPSS through the DTNs
+on the `es` cluster rather than a `service` partition, and its module file lives
+somewhere else:
+
+```bash
+module use /usw/hpss/modulefiles
+module load hsi
+```
+
+Submit the transfer to `dtn_f5_f6` with the `hpss` QOS, which exists precisely
+to mark a job as HPSS traffic:
+
+```bash
+sbatch -p dtn_f5_f6 --qos hpss --constraint=f5 --ntasks=1 --time=0:30:00 stage.sh
+```
+
+`hsi` `put` and `get` take the **local path first**, then a colon, then the HPSS
+path — this is not FTP order:
+
+```bash
+hsi "put /gpfs/f5/<project>/<user>/run.nc : /<PORTFOLIO>/<project>/1year/<User.Id>/run.nc"
+hsi "get /<PORTFOLIO>/<project>/1year/<User.Id>/run.nc"
+```
+
+The `hpss` QOS is paused whenever HPSS is under maintenance, and the sibling
+`ppan` QOS is paused when PPAN is, so a job that sits in a paused state is
+usually the service window rather than your script. All three transfer QOSes
+(`dtn`, `ppan`, `hpss`) are capped at 16 hours with a usage factor of 1.00;
+confirm with `sacctmgr show qos format=name,priority,usagefactor,maxwall`.
+
+HPSS keeps a **single copy** with no backup and no recovery, overwrites targets
+without warning, refuses files over 3 TB, and deletes data when its retention
+pool expires. Access is not granted by a Gaea project — request it from
+`rdhpcs.hpss.help@noaa.gov`. The full syntax, HTAR limits, expiry checks, and
+the GFDL DMF commands are in the `slurm` skill's RDHPCS Archive Storage
+Reference.
+
+For GFDL-model data, note that Gaea-to-GFDL archive transfers of files larger
+than 2 TB are slow; Globus is the suggested path for those.
+
 ## Performance Tips and Known Issues
 
 - **GPFS F5 performance** — Gaea intermittently shows F5 slowness: file

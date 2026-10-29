@@ -31,4 +31,7 @@ and should be re-verified against the guides below when they change:
 - `rdhpcs-ursa` — NOAA RDHPCS Ursa (Slurm, H100 GPU queues, fleet QOS policy) — <https://docs.rdhpcs.noaa.gov/systems/ursa_user_guide.html>
 
 The shared `slurm` skill carries the fleet-wide RDHPCS queue-and-allocation
-policy derived from <https://docs.rdhpcs.noaa.gov/queue_policy/policies.html>.
+policy derived from <https://docs.rdhpcs.noaa.gov/queue_policy/policies.html>,
+and its RDHPCS Archive Storage Reference
+(`slurm/references/storage.md`) is derived from the NESCC-HPSS and GFDL-archive
+sections of <https://docs.rdhpcs.noaa.gov/data/storage.html>.

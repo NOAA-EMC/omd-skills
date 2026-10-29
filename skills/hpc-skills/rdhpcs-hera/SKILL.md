@@ -122,10 +122,16 @@ the `service` partition when the job needs external network or HPSS.
 | Home | `/home/First.Last` | 30 GB | Yes, plus `~/.snapshot` | Code and configs — never job I/O |
 | Scratch | `/scratch3`, `/scratch4` | project-based | **No** | Job input and output |
 | VAST scratch | `/scratch5` | project quota for `rstprod` and `public`; `/scratch5/purged/<First.Last>` for everyone else | **No** | All-flash experimental area, 90-day purge |
-| Archive | NESCC-HPSS via `hsi` / `htar` | portfolio-managed | Yes | Long-term retention |
+| Archive | NESCC-HPSS via `hsi` / `htar` | portfolio-managed | **No — single copy, deleted on retention expiry** | Long-term retention only if you can also keep a second copy |
 
 `stmp` on `/scratch3-4` is purged every Monday for files older than 30 days.
 Scratch is never backed up. Do not run jobs against files in `/home`.
+
+`hsi put` and `hsi get` take the **local path first**, then a colon, then the
+HPSS path — not FTP order. Load the client with `module load hpss`; it is not
+loaded by default, and only `service`-partition nodes can reach HPSS. Files over
+3 TB fail to store. See [references/storage.md](references/storage.md) for the
+full syntax, the HTAR limits, and how to check what is about to expire.
 
 ## Modules
 

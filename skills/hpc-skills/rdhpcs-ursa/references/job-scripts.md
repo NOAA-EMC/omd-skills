@@ -226,18 +226,19 @@ exists only on these nodes.
 #SBATCH -o /scratch3/<user>/stage_%j.out
 
 source $MODULESHOME/init/bash
-module load hpss          # on a .fairmont host
-# module use /usw/hpss/modulefiles && module load hsi     # on a .ncrc host
+module load hpss          # not loaded by default
 
 cd /scratch3/<user>/staging
-hpssdir=/1year/PORTFOLIO/project/User.Id
+hpssdir=/<PORTFOLIO>/<project>/1year/<User.Id>
 
-hsi "get $hpssdir/mydata.nc mydata.nc"
-htar -cvf $hpssdir/results.tar ./results/
+# Local path first, colon, then the HPSS path -- this is not FTP order
+hsi "get mydata.nc : $hpssdir/mydata.nc"
+htar -P -cvf $hpssdir/results.tar ./results/
 ```
 
 Maximum 64 cores and/or 250 GB per user, and 24 hours. `u1-service` allows only `batch` and
-`windfall`.
+`windfall`. HPSS keeps a single copy and overwrites targets without warning, so list the
+destination with `hsi "ls -l $hpssdir"` before writing over anything.
 
 ---
 

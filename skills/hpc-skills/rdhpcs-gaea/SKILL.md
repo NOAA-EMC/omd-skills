@@ -161,6 +161,7 @@ There is no `-q` line: `normal` is the default QOS. Add
 | Member work | `/gpfs/f5/<projID>/scratch/<userID>` | user-set | N/A | No | No | C5 only |
 | Project work | `/gpfs/f5/<projID>/proj-shared` | 770 | N/A | No | No | C5 only |
 | World work | `/gpfs/f5/<projID>/world-shared` | 775 | N/A | No | No | C5 only |
+| NESCC-HPSS archive | `/<PORTFOLIO>/<project>/<retention>/<user>` | portfolio-managed | project allocation | **No — single copy** | Yes, on retention expiry | DTNs (`dtn_f5_f6`) only |
 
 The same three GPFS areas exist on `/gpfs/f6` (C6 only) and `/gpfs/f7` (C7
 only). The NFS areas are the guide's recommended place for user and project

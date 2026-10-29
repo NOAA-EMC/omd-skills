@@ -21,7 +21,7 @@ Scratch directories have a portfolio level in them. The documented layout is
 | Scratch temp | `/scratch[3,4]/.../stmp` | project-based | **No** | Weekly, Monday, >30 days | Short-lived intermediates |
 | VAST scratch | `/scratch5` | project quota for `rstprod` and `public` only | **No** | No | All-flash work for those two projects |
 | VAST purged | `/scratch5/purged/First.Last` | 250 TB pool | **No** | Files not accessed in 90 days | Every other project's `/scratch5` access |
-| Archive | NESCC-HPSS | portfolio-managed | Yes | No | Long-term retention |
+| Archive | NESCC-HPSS | portfolio-managed | **No — single copy** | Yes, on retention expiry | Long-term retention |
 
 RDHPCS states plainly that the HPFS scratch file systems are **not** backed up.
 
@@ -118,30 +118,88 @@ fifteen minutes and re-check before opening a ticket.
 
 ## Archiving to HPSS
 
-HPSS is the only long-term store on this system besides `/home`. Archive work runs in a
-partition whose nodes hold the external connection — on Ursa that is `u1-service`, and RDHPCS
-names it as the target for pushing and pulling data to and from HPSS. Load the client inside
-the job:
+HPSS is the only long-term store on this system besides `/home`, and it holds a
+**single copy**: no backup, no recovery, and `put`, `get`, and `mv` overwrite the
+target **without warning**. Archive only what costs more to regenerate than to store.
+
+Compute nodes cannot reach HPSS. Archive work runs in a partition whose nodes hold
+the external connection — on Ursa that is `u1-service`, which RDHPCS names as the
+target for pushing and pulling data to and from HPSS. Load the client with
+`module load hpss`; it is not loaded by default.
+
+### hsi takes the local path first
+
+`hsi` `put` and `get` do **not** use FTP argument order. The local pathname comes
+first and a colon separates it from the HPSS pathname:
 
 ```bash
-# Single file up
-hsi "put /scratch3/<portfolio>/<project>/<user>/result.nc /1year/PORTFOLIO/project/User.Id/result.nc"
+# Single file up:  LOCAL : HPSS
+hsi "put /scratch3/<portfolio>/<project>/<user>/result.nc : /<PORTFOLIO>/<project>/1year/<User.Id>/result.nc"
 
-# Directory up as a tar
-htar -cvf /1year/PORTFOLIO/project/User.Id/results.tar ./results/
+# Retrieve into the current directory: HPSS path alone
+hsi "get /<PORTFOLIO>/<project>/1year/<User.Id>/result.nc"
+
+# Retrieve and rename:  LOCAL : HPSS
+hsi "get /scratch3/<portfolio>/<project>/<user>/result.nc : /<PORTFOLIO>/<project>/1year/<User.Id>/result.nc"
 ```
 
-Retrieve with the mirror commands, and check what is archived and when it expires:
+Quote the whole command string; the same order applies inside a here-document.
+RDHPCS also mentions `hsi cput` for a directory tree but does not publish its
+syntax — use `htar`, or `tar` plus `hsi put`, which are documented.
+
+### Size limits
+
+Files in the GB range are preferred. Keep any single file at or under 1 TB —
+larger risks poor performance or failure — and **anything over 3 TB fails to
+store**. Bundle many MB-or-smaller files with `htar`, or `tar` them and `hsi put`
+the single tarball. `htar` limits: member file **68 GB**, directory path **154
+characters**, filename **99 characters**.
 
 ```bash
-hsi "get /1year/PORTFOLIO/project/User.Id/result.nc result.nc"
-htar -xvf /1year/PORTFOLIO/project/User.Id/results.tar
-
-hsi "expls /1year/PORTFOLIO/project/User.Id"          # listing with expiration
-hsi "expfind -d 30 /1year/PORTFOLIO/project/User.Id"  # expiring within 30 days
+htar -P -cvf /<PORTFOLIO>/<project>/1year/<User.Id>/results.tar ./results/  # -P makes the remote dir
+htar -tvf /<PORTFOLIO>/<project>/1year/<User.Id>/results.tar                 # list
+htar -xvf /<PORTFOLIO>/<project>/1year/<User.Id>/results.tar file1 file2     # extract named members
+htar -Xvf /<PORTFOLIO>/<project>/1year/<User.Id>/results.tar                 # rebuild a lost .idx
 ```
+
+Creating an archive writes a `.idx` alongside it; without that index, listing and
+selective extraction require a rebuild.
+
+### Retention and expiry
+
+Files sit under a retention family (`1year`–`5year` or `permanent`), each a
+separate file family, so `hsi mv` works only within one retention directory —
+crossing pools requires `cp` plus deleting the original. Every file gets an
+expiration date from its create time plus the pool, and expired files are deleted:
+notification on or before the first day of the month after expiry, deletion on the
+first day of the second month. Checking that list is your responsibility.
+
+```bash
+hsi "expls -A -R /<PORTFOLIO>/<project>/1year/<User.Id>"   # expiration dates
+hsi "expfind -d 30 /<PORTFOLIO>/<project>/1year/<User.Id>" # expiring within 30 days
+hsi "ls -N <path>"    # full details including HPSS paths;  hsi "ls -V <file>" for tape volumes
+```
+
+The expired-file list is world-readable inside HPSS at
+`/Expired_Data_Lists/expired.YYYY-MM.txt` and is searchable by username.
+
+### Getting access
+
+HPSS access does **not** follow from being on a Ursa compute project. You must be a
+current RDHPCS or WCOSS user and email `rdhpcs.hpss.help@noaa.gov` with subject
+`USERNAME requests access to HPSS - PORTFOLIO/PROJECT`. Already being on the
+compute project means no PI or Project Firm Manager approval is needed (both are
+notified); otherwise their approval is required. Projects and retention pools are
+approved by the Portfolio Manager, and requests are **not supported in AIM** — they
+go through the HPSS help-ticket system.
 
 The batch-job form is in [job-scripts.md](job-scripts.md#u1-service-serial-job).
+The fleet-wide reference, including the GFDL DMF archive, is in the `slurm` skill's
+RDHPCS Archive Storage Reference.
+
+RDHPCS states the layout as `PORTFOLIO/PROJECT/RETENTION` while its own examples
+write `RETENTION/PORTFOLIO/PROJECT`. List your area with `hsi "ls /"` before
+writing, and ask HPSS help for the canonical path rather than guessing.
 
 ---
 
@@ -154,15 +212,17 @@ The batch-job form is in [job-scripts.md](job-scripts.md#u1-service-serial-job).
 | Model output other jobs read next | `/scratch3` or `/scratch4` |
 | Intermediate files under 30 days old | `stmp` |
 | I/O-bound work that needs flash, or an evaluation of VAST | `/scratch5/purged/$USER` |
-| Anything you cannot afford to lose | HPSS, or `/home` if it fits in 30 GB |
+| Anything you cannot afford to lose | `/home` if it fits in 30 GB (it is backed up and snapshotted), or HPSS **plus** a second copy elsewhere |
 | Data a collaborator needs long-term | HPSS or GFDL-DMF |
 
-Two rules that RDHPCS states plainly:
+Three rules that RDHPCS states plainly:
 
 1. **Never run a job against files in `/home`**, including through a symlink that points at
    scratch. Home I/O from compute jobs degrades the file system for everyone.
 2. **Scratch is not storage.** It is not backed up, and a project that lapses can lose it.
    Move anything worth keeping to HPSS.
+3. **HPSS is not a backup.** It keeps one copy and deletes it when the retention pool
+   expires. `/home` is the only thing here that is actually backed up.
 
 The published home quota figures disagree with each other: the queue-policy page claims
 50 GB on every system, while the data-storage summary table gives Ursa 30 GB and the example
