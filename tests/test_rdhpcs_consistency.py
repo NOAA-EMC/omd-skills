@@ -21,6 +21,7 @@ HPC = ROOT / "skills" / "hpc-skills"
 MACHINE_SKILLS: dict[str, str] = {
     "rdhpcs-hera": "hera",
     "rdhpcs-ursa": "ursa",
+    "rdhpcs-orion": "orion",
 }
 
 # QOS columns that machine skills must agree with when they publish them.
@@ -94,9 +95,15 @@ def cell_tokens(cell: str) -> set[str]:
 def qos_table(text: str) -> dict[str, dict[str, str]]:
     """Return the QOS-keyed table in a document, or {} when none has the checked columns.
 
-    Machine skills that list QOS names without wall-time or TRES values (Orion,
-    Hercules, Gaea) are deliberately not cross-checked, because RDHPCS publishes
-    that table for Hera and Ursa only.
+    Only a table whose header uses the shared-policy column names ``QOS``,
+    ``Max walltime`` and ``Billing TRES`` is cross-checked.  Hera and Ursa
+    restate RDHPCS's fleet table with those names, so they are checked.  MSU
+    publishes its own per-QOS table for Orion and Hercules with different
+    column names (``Maximum Wall Clock``, ``Billing TRES Factor``) and a
+    node-count dimension instead of a core count, so an Orion/Hercules skill
+    quoting MSU verbatim is deliberately not compared cell-by-cell; Gaea
+    publishes a differently-shaped QOS table (priority and usage factors, no
+    Billing TRES column) that is likewise not cross-checked.
     """
 
     found: dict[str, dict[str, str]] = {}
