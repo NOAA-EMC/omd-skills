@@ -1,6 +1,6 @@
 # Contributing to Genesis Skills
 
-Thank you for your interest in contributing to Genesis Skills. This guide covers the [Claude Code skills format](https://code.claude.com/docs/en/skills) as a baseline, plus our conventions for portable multi-client skills. The active [development repository](https://github.com/AI-ModCon/genesis-skills) is hosted on GitHub and is where development, forks, issues, and pull requests occur.
+Thank you for your interest in contributing to OMD Skills. This guide covers the [Claude Code skills format](https://code.claude.com/docs/en/skills) as a baseline, plus our conventions for portable multi-client skills. The active [development repository](https://github.com/AI-ModCon/genesis-skills) is hosted on GitHub and is where development, forks, issues, and pull requests occur.
 
 ---
 

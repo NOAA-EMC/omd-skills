@@ -1,8 +1,8 @@
 # Attribution
 
-**Team:** ModCon Base CAF Team
+**Team:** OMD - Modeling Division
 
-**Author:** Matt Baughman (PPPL)
+**Author:** Barry Baker (OMD)
 
 Licensed Apache-2.0 as part of this subtree - see [LICENSE](LICENSE).
 
