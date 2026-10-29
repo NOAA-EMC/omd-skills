@@ -14,6 +14,7 @@ Skills included:
 - `rdhpcs-gaea` — NOAA RDHPCS Gaea at ORNL NCCS (Slurm federation, C5/C6/C7 generations, GPFS F5/F6/F7)
 - `rdhpcs-hera` — NOAA RDHPCS Hera (Slurm, E4-node shape, fleet QOS policy)
 - `rdhpcs-hercules` — NOAA RDHPCS Hercules at MSU-HPC (Slurm, 80-core nodes, MSU accounts)
+- `rdhpcs-mercury` — NOAA RDHPCS Mercury data-transfer system (trusted/untrusted DTNs, /collab2 staging)
 - `rdhpcs-orion` — NOAA RDHPCS Orion at MSU-HPC (Slurm, 40-core nodes, MSU accounts)
 - `rdhpcs-ppan` — NOAA RDHPCS PPAN (Pan) at GFDL Princeton (Slurm post-processing tier, tape-backed /archive)
 - `rdhpcs-ursa` — NOAA RDHPCS Ursa (Slurm, H100 GPU queues, fleet QOS policy)
