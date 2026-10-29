@@ -1,6 +1,6 @@
 ---
 name: rdhpcs-orion
-description: >
+description: >-
   NOAA RDHPCS Orion system at the Mississippi State University HPC2
   collaboratory. Use when writing Slurm job scripts for Orion, choosing the
   orion, bigmem, or service partition, requesting Skylake 40-core nodes, working
@@ -55,7 +55,7 @@ logins, no federation, and FairShare computed per system.
 
 1. **`-A <account>` is mandatory.** Every job must name a project account.
 2. **Always set `-t`.** The default wall clock is **5 minutes**; a job with no
-   time request is silently killed at 5 minutes.
+   time request is terminated by the scheduler at 5 minutes.
 3. **Never request less than 5 minutes.** MSU explicitly recommends against it.
 4. **Do not over-request.** Long wall clocks increase your wait and reduce
    scheduler efficiency for everyone. MSU suggests padding observed runtimes by
@@ -135,7 +135,6 @@ external network or HSMS access.
 | Home | `/home/<userid>` | 10 GB | Nightly | Code and configs — never job I/O |
 | Scratch | `/work/noaa/<project>` | project-based | **No** | Job input and output (DDN Lustre SFA18k, 9 PB shared) |
 | Scratch | `/work2/noaa/<project>` | project-based | **No** | Same layout, 18 PB with an SSD "Hot Pool" that helps small files and random I/O |
-| Archive | HSMS/HPSS | portfolio-managed | Yes | Long-term retention, reached from the `service` partition |
 
 Both `work` filesystems are scratch and are **not** backed up, and MSU warns that
 Orion's disk space is limited — move data back to the RDHPCS Niagara archive when
@@ -181,7 +180,7 @@ minutes.
 
 ## Common Gotchas
 
-- No `-t` — the job dies at 5 minutes with no warning.
+- No `-t` — the job runs only 5 minutes and is then terminated.
 - `-t` under 5 minutes, which MSU advises against.
 - Assuming the 30 GB home quota of Hera or Ursa; Orion gives 10 GB.
 - Writing job output to `/home` — it is NFS, small, and holds your configs.

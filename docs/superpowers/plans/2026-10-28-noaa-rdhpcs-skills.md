@@ -1024,7 +1024,7 @@ Create `skills/hpc-skills/rdhpcs-orion/references/programming-env.md` (~180 line
 - [ ] **Step 7: Run test to verify it passes**
 
 Run: `python3 -m unittest tests.test_rdhpcs_consistency -v`
-Expected: `PASS`. If `test_machine_qos_facts_match_slurm` fails, the Orion QOS table used the shared-policy column names (`Max walltime` / `Billing TRES`) instead of MSU's own (`Maximum Wall Clock` / `Billing TRES Factor`) — rename the headers back.
+Expected: `PASS`. If `test_machine_qos_facts_match_slurm` fails, the Hercules QOS table used the shared-policy column names (`Max walltime` / `Billing TRES`) instead of MSU's own (`Maximum Wall Clock` / `Billing TRES Factor`) — rename the headers back.
 
 - [ ] **Step 8: Validate the skill**
 
@@ -1089,9 +1089,9 @@ description: >
   hercules or service partition, requesting 80-core Xeon Platinum 8380 nodes with
   512 GB of memory, placing data on the work or work2 Lustre scratch filesystems
   or the 10 GB NFS home, using MSU-HPC accounts that are separate from RDHPCS
-  accounts, setting up scrontab or cron on hercules-login-1, or discovering LMOD
-  compiler and MPI modules on Hercules.
-compatibility: Script-authoring skill; no login required. Accounts and access are managed by MSU HPC2 independently of RDHPCS, so MSU authentication is required.
+  accounts, setting up cron on hercules-login-1, or discovering LMOD compiler
+  and MPI modules on Hercules.
+compatibility: Script-authoring skill; no login required. Hercules is hosted at Mississippi State University, so access uses MSU credentials and Duo rather than the NOAA RDHPCS bastions.
 metadata:
   version: "1.0"
   system: hercules
@@ -1105,21 +1105,21 @@ allowed-tools: Read Write Grep Glob
 
 Body — same section order as Task 4 Step 3, with these **Hercules-specific** values and no Orion numbers carried over:
 
-1. **`# Hercules — MSU-HPC (NOAA RDHPCS)`** — the newer MSU HPC2 system. Slurm with LMOD; Rocky 9.1.
+1. **`# Hercules — MSU-HPC (NOAA RDHPCS)`** — the newer MSU HPC2 system. Slurm with LMOD; **Rocky Linux 9.x** (the MSU guide names the 9.x series, not a point release).
 2. **`## System Overview`** table: Dell EMC PowerEdge C6520 nodes; Intel Xeon Platinum 8380, 40 cores × 2 sockets = **80 cores per node** at 2.30 GHz; **512 nodes**; **40,960 cores**; **512 GB per node**, so there is **no bigmem tier**; Mellanox NDR-200 InfiniBand; 4 login nodes, 4 data transfer nodes, 4 development nodes.
 3. **`## Critical Requirements`** — `-A` mandatory; always set `-t` (5-minute default); `--ntasks-per-node` up to 80; do not request `bigmem`, it does not exist here.
 4. **`## Partitions`** table: `hercules` (batch, windfall, debug, urgent, novel; 80 cores and 512 GB per node) and `service` (batch, windfall, debug, urgent; maximum 1 core, 24 hour limit, external network and HPSS).
-5. **`## QOS`** — names only plus `sacctmgr show qos format=Name,MaxWall,PriorityTier,BillingFactors`, exactly as Task 4 Step 5. No checked columns.
+5. **`## QOS`** — quote MSU's per-QOS table with MSU's own column names, exactly as Task 4 Step 5, but with the **Hercules** node limits: `batch` 1–500 nodes (the guide gives no per-system split for `batch`), `urgent`/`debug`/`windfall` 1–**250**, `novel` from **251** to the largest partition, `service` the 24-hour `windfall` exception. Same wall clocks (8 h, 30 min debug), same Billing TRES factors (1.0 / 2.0 / 1.25 / 0.0 / 1.0), same 400 pending/running and 20 age-priority caps. State that Hercules has no `long`, `gpu`, or `gpuwf`, and offer `sacctmgr show qos format=Name,MaxWall`.
 6. **`## Minimal Job Script`** — `-p hercules`, `--ntasks-per-node=80`, `-t` set, output under `/work/<project>/<user>`.
 7. **`## Storage`** — state the MSU filesystems in full (they are shared with Orion, but the skill must stand alone): `/home/First.Last` NFS 10 GB backed up nightly; `work` DDN Lustre 9 PB scratch not backed up; `work2` DDN Lustre 18 PB with hot-pool SSD cache not backed up; HPSS via HSMS. No `$TMPDIR` row — RDHPCS documents that variable only for PPAN.
 8. **`## Accounts and Projects`** — MSU HPC2 administered, independent of RDHPCS; managers need an active MSU account; renewal required.
-9. **`## Cron and Scrontab`** — `cron` on `hercules-login-1`; `scrontab` preferred; `at` only on `login1`.
-10. **`## Common Gotchas`** — carrying Orion's 40-core node shape into a Hercules script; requesting `bigmem`; omitting `-t`; the 10 GB home quota; compiling on a login node; MSU versus RDHPCS account naming; cron on the wrong login node.
+9. **`## Cron and Recurring Work`** — the MSU guide lists `cron` services as "Available on hercules-login-1 (VERIFY)": the **(VERIFY) marker is literally in the published page**, so the skill must reproduce it and tell the user to confirm before scheduling, not silently drop it. `scrontab` is not documented for Hercules; `at` only on `login1`.
+10. **`## Common Gotchas`** — carrying Orion's 40-core node shape into a Hercules script (Hercules is 80 cores); requesting `bigmem`, which does not exist here; omitting `-t` (5-minute kill); the 10 GB home quota; compiling on a login node; MSU versus RDHPCS account naming; cron on the wrong login node; copying an `/apps` path or module name from Orion, since Hercules is spack-built with `<package-hash>` directory names and different module names; expecting FairShare to carry between the two systems.
 11. **`## Additional Resources`** — three `references/` links plus the MSU-HPC guide URL.
 
 - [ ] **Step 4: Write the three `references/` files**
 
-Create `references/job-scripts.md` (~200 lines), `references/storage.md` (~150 lines), and `references/programming-env.md` (~180 lines) with the same section sets specified in Task 4 Steps 4–6, changing every node-shape value to the Hercules facts (80 cores per node, 512 GB, no bigmem partition, NDR-200, 512 nodes) and keeping the `service` partition rules. Restate the MSU storage and account rules in full rather than pointing at the Orion skill.
+Create `references/job-scripts.md` (~200 lines), `references/storage.md` (~150 lines), and `references/programming-env.md` (~180 lines) with the same section sets specified in Task 4 Steps 4–6, changing every node-shape value to the Hercules facts (80 cores per node, 512 GB, no bigmem partition, NDR-200, 512 nodes, 4 devel nodes, `hercules-dtn-{1..4}.hpc.msstate.edu` and the round-robin `hercules-dtn`, Globus endpoint `msuhpc2-Hercules`, `shpcrpt -c hercules`) and keeping the `service` partition rules. Restate the MSU storage and account rules in full rather than pointing at the Orion skill. Hercules-specific material to include: spack-built `/apps/spack/<package-hash>` layout with module and directory names that differ from Orion; MSU installs older versions on request via a justified help ticket; the Hercules-only MPI buffer-size crash (`I_MPI_SHM_HEAP_VSIZE`, default 8192 MB against 512 GB nodes) and the Hercules-only advice to drop `--ntasks-per-node` for large domains because nodes have so much memory; the WRF/netCDF module-variable example MSU writes for Hercules (`NETCDF_C_ROOT`, `NETCDF_FORTRAN_ROOT`, `PARALLEL_NETCDF_ROOT`/`PNETCDF`). Do not carry the Task 4 inventions: no `$TMPDIR`, no scrontab, no Podman, no invented `sacct` columns.
 
 - [ ] **Step 5: Run test to verify it passes**
 
