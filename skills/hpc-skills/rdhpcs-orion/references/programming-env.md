@@ -231,6 +231,8 @@ Do not invent content for these; ask the help system at
 - **Job arrays.** MSU does not document `--array` for Orion.
 - **Build systems and language runtimes.** No CMake, GCC, or MPI-standard module
   list is published; discover them with `module spider`.
-- **`$TMPDIR`.** RDHPCS documents a node-local temp directory on the NOAA-operated
-  systems but not on Orion. Do not assert one; use a directory under your project
-  scratch and clean it up.
+- **Node-local temp.** RDHPCS documents `$TMPDIR` only for PPAN, where it points
+  into `/vftmp`. Neither the MSU guide nor the fleet storage page describes a
+  node-local temp path for Orion, so use a directory under your project scratch
+  (an `stmp`-style folder you clean up yourself) rather than assuming `$TMPDIR`
+  exists.

@@ -172,7 +172,6 @@ salloc -A mygpu_project -t 480 -p u1-mi300x -q gpuwf --gpus=mi300x:2
 | Home | `/home/First.Last` | 30 GB | Yes, plus `~/.snapshot` | Code and configs — never job I/O |
 | Scratch | `/scratch3`, `/scratch4` | project-based (Lustre) | **No** | Job input and output |
 | VAST scratch | `/scratch5` | project quota for `rstprod` and `public`; `/scratch5/purged/<First.Last>` for everyone else | **No** | All-flash experimental area, 250 TB pool, 90-day purge |
-| Node-local | `$TMPDIR` | per node | job lifetime | Fast temporary files |
 | Archive | NESCC-HPSS via `hsi` / `htar` | portfolio-managed | Yes | Long-term retention |
 
 `/scratch5/purged/<First.Last>` must be named exactly like your NOAA `First.Last`. `stmp` on

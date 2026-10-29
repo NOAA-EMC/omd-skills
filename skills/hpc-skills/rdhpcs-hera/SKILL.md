@@ -122,7 +122,6 @@ the `service` partition when the job needs external network or HPSS.
 | Home | `/home/First.Last` | 30 GB | Yes, plus `~/.snapshot` | Code and configs — never job I/O |
 | Scratch | `/scratch3`, `/scratch4` | project-based | **No** | Job input and output |
 | VAST scratch | `/scratch5` | project quota for `rstprod` and `public`; `/scratch5/purged/<First.Last>` for everyone else | **No** | All-flash experimental area, 90-day purge |
-| Node-local | `$TMPDIR` | per node | job lifetime | Fast temporary files |
 | Archive | NESCC-HPSS via `hsi` / `htar` | portfolio-managed | Yes | Long-term retention |
 
 `stmp` on `/scratch3-4` is purged every Monday for files older than 30 days.

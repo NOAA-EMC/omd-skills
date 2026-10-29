@@ -21,7 +21,6 @@ Scratch directories have a portfolio level in them. The documented layout is
 | Scratch temp | `/scratch[3,4]/.../stmp` | project-based | **No** | Weekly, Monday, >30 days | Short-lived intermediates |
 | VAST scratch | `/scratch5` | project quota for `rstprod` and `public` | **No** | No | All-flash experimental work |
 | VAST purged | `/scratch5/purged/First.Last` | 250 TB pool | **No** | Files not accessed in 90 days | Everyone else's `/scratch5` access |
-| Node-local | `$TMPDIR` | per node | **No** | Job lifetime | Fast temporary files |
 | Archive | NESCC-HPSS | portfolio-managed | Yes | No | Long-term retention |
 
 ---
@@ -69,7 +68,7 @@ wherever you are. Hourly copies appear alongside the daily ones as `hourly.YYYY-
 | `stmp` on `/scratch3-4` | Purged weekly on Mondays for files older than 30 days |
 | `/scratch5/purged` | Purged for files not accessed in 90 days |
 | `/scratch3`, `/scratch4` outside `stmp` | Not purged — but never backed up |
-| `$TMPDIR` | Gone when the allocation ends |
+| Node-local temp | RDHPCS documents `$TMPDIR` only for PPAN, so use a scratch `stmp` directory for intermediates |
 
 Find files approaching the `stmp` threshold before they disappear:
 
