@@ -136,6 +136,6 @@ is `htar`.
 ## Additional Resources
 
 - Mercury user guide: <https://docs.rdhpcs.noaa.gov/systems/mercury_user_guide.html>
-- Connecting and bastions: <https://docs.rdhpcs.noaa.gov/connecting.html>
+- Connecting and bastions: <https://docs.rdhpcs.noaa.gov/connecting/index.html>
 - Transferring data: <https://docs.rdhpcs.noaa.gov/data/transfers.html>
 - Scheduler patterns on the compute systems: see the `slurm` skill.
