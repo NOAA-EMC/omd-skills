@@ -222,11 +222,13 @@ first job's ID feeds the second:
 ```bash
 #!/bin/bash
 jid1=$(sbatch --parsable -n1 -A <account> -J sim --wrap="srun sleep 10")
-jid2=$(sbatch --parsable -n1 -A <account> -J post -d afterok:$jid1 --wrap="srun ls")
+jid2=$(sbatch --parsable -n1 -A <account> -J post -d afterok:$jid1 --wrap="srun hostname")
 ```
 
-`at` (the queue-change trick RDHPCS documents for Hera and Ursa) is available on
-`login1` only on Orion, and do not schedule a QOS change under 120 seconds.
+RDHPCS also documents submitting to one QOS and telling Slurm to switch it later if
+the job is still pending (via `at`). On Orion and Hercules that functionality is
+**only available on login1**, and never use a delay shorter than 2 minutes
+(120 seconds).
 
 ---
 
@@ -300,8 +302,8 @@ writes `slurm-<jobid>.out` in the directory you submitted from.
 ## Monitoring and Post-Run
 
 ```bash
-squeue -u <user>              # my jobs (usernames are truncated in squeue output)
-squeue -A <account>           # my project's jobs
+squeue -u <user>              # my jobs — MSU's documented form
+squeue -a                     # current jobs in the queue (RDHPCS fleet Slurm guide)
 squeue --start                # point-in-time estimate of when queued jobs may start
 scontrol show job <jobid>     # why a job has stayed queued (covers last 15 min)
 
@@ -316,8 +318,8 @@ shpcrpt -c orion -p <project>
 ```
 
 MSU notes that usernames are truncated in `squeue` output, which makes it hard to
-grep — filter with `-u` or `-A` instead of piping `squeue` through `grep`.
-`sacct` options and job states are on the `sacct` man page.
+grep — use `squeue -u <user>` instead, which also shows which jobs are active,
+eligible, and blocked. `sacct` options and job states are on the `sacct` man page.
 
 `shpcrpt` is the NOAA reporting tool exposed through `module load contrib
 noaatools`; on Hercules the same command takes `-c hercules`.

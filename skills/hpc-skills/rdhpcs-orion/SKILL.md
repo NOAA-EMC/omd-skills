@@ -86,7 +86,7 @@ RDHPCS fleet policy on wall clock and billing factor, but expresses job size in
 | `batch` | 1 | 500 | 8 hours | 1.0 | Default QOS for projects with more than a windfall-only allocation (`RawShare=1`) |
 | `urgent` | 1 | 500 | 8 hours | 2.0 | **One job per project pending or running.** FairShare drops at twice the batch rate; below 0.45 the job is changed to `batch` and the user is notified on stderr |
 | `debug` | 1 | 500 | 30 minutes | 1.25 | Two jobs per user pending or running; highest priority; not for fast-turnaround general work |
-| `windfall` | 1 | 500 | 8 hours (24 h on `service`) | 0.0 | Lowest priority, charges nothing, does not affect FairShare; the only QOS a windfall-only project may use |
+| `windfall` | 1 | 500 | 8 hours, partition exception for `service` | 0.0 | Lowest priority, charges nothing, does not affect FairShare; the only QOS a windfall-only project may use |
 | `novel` | 501 | largest partition | 8 hours | 1.0 | Nearly the whole system; submit a help ticket first so MSU can schedule the window with you |
 
 Every QOS on Orion: a maximum of **400 pending/running jobs per project**
