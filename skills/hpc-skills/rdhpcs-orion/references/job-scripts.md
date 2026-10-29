@@ -276,12 +276,16 @@ before writing a skill or workflow that depends on it.
 
 ## Output and Error Conventions
 
+RDHPCS documents `%x` (job name) and `%j` (job ID) in its batch-script example. The
+rest of the table is generic Slurm — confirm with `man sbatch`, since MSU's guide
+does not list them for Orion.
+
 | Placeholder | Expands to |
 |-------------|------------|
-| `%x` | Job name (`-J`) |
-| `%j` | Job ID |
-| `%N` | List of allocated nodes |
-| `%t` | End time in DDHHMMSS format |
+| `%x` | Job name (`-J`) — RDHPCS-documented |
+| `%j` | Job ID — RDHPCS-documented |
+| `%N` | Node name(s) of the allocation (generic Slurm) |
+| `%t` | End time (generic Slurm) |
 
 ```bash
 #SBATCH -o /work/noaa/<project>/<user>/%x-%j.out
@@ -296,13 +300,24 @@ writes `slurm-<jobid>.out` in the directory you submitted from.
 ## Monitoring and Post-Run
 
 ```bash
-squeue -u <user>              # my jobs
+squeue -u <user>              # my jobs (usernames are truncated in squeue output)
 squeue -A <account>           # my project's jobs
-scontrol show job <jobid>     # full job state
-sacct -j <jobid> --format=JobID,JobName,State,ExitCode,Elapsed,MaxRSS
+squeue --start                # point-in-time estimate of when queued jobs may start
+scontrol show job <jobid>     # why a job has stayed queued (covers last 15 min)
+
+# Jobs that ran in the last 24 hours and their states — MSU's documented form
+sacct --user $USER \
+  --starttime $(date --date="yesterday" +%F) \
+  -X \
+  --format=JobID,JobName%30,Partition,Account,AllocCPUS,State,Elapsed,QOS
+
 shpcrpt -c orion -s           # project usage report (all projects you can see)
 shpcrpt -c orion -p <project>
 ```
+
+MSU notes that usernames are truncated in `squeue` output, which makes it hard to
+grep — filter with `-u` or `-A` instead of piping `squeue` through `grep`.
+`sacct` options and job states are on the `sacct` man page.
 
 `shpcrpt` is the NOAA reporting tool exposed through `module load contrib
 noaatools`; on Hercules the same command takes `-c hercules`.

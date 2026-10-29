@@ -118,9 +118,17 @@ it before `srun`, never above the node's memory. Orion's nodes have 192 GB, so a
 default tuned for another system can be wrong here — check before copying an
 environment across machines.
 
-**Stack-size segfaults.** MSU's FAQ lists stack-limit segfaults for both Orion and
-Hercules; the fix is the usual `ulimit -s unlimited` inside the job script (or a
-smaller per-thread stack).
+**Stack-size segfaults.** MSU documents this for both Orion and Hercules: the
+default soft stack limit is **16KB**, and a program whose subroutine and function
+locals exceed it segfaults. Raise it and verify inside the job script:
+
+```bash
+ulimit -s <stack_size>   # MSU's form; pick a size, don't just use "unlimited"
+ulimit -s                # confirm it took
+```
+
+MSU explicitly says to set this **in the batch script and not in `~/.bashrc`**,
+because putting it in the shell startup file "can cause unintended consequences".
 
 ---
 
