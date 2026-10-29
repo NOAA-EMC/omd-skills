@@ -1543,15 +1543,16 @@ Create `skills/hpc-skills/rdhpcs-cloud/SKILL.md` (no `references/` directory). F
 ```markdown
 ---
 name: rdhpcs-cloud
-description: >
-  NOAA RDHPCS Cloud on-demand clusters and cloud access to on-prem systems.
-  Use when requesting an ad-hoc HPC cluster through ACTIVATE, reaching Hera,
-  Ursa, Orion, Hercules, or Gaea from the cloud with ParallelWorks, running
-  Jupyter or VS Code on a Slurm compute node, choosing Lustre, bucket or block
-  blob storage, or a contrib filesystem for a cloud cluster, estimating storage
-  cost with the RDHPCS cost calculator, or reviewing cloud usage reports and
-  forwarded on-prem quota warnings.
-compatibility: Script-authoring skill; no login required. Provisioning requires an approved RDHPCS cloud project and the cloud dashboard sign-in path for your account.
+description: >-
+  NOAA RDHPCS Cloud computing on the Parallel Works platform, plus Parallel
+  Works access to on-prem RDHPCS systems. Use when creating a custom HPC
+  cluster on demand through the NOAA RDHPCS Portal, running Jupyter or VS Code
+  on a Slurm compute node in a cloud cluster, choosing Lustre, bucket or blob,
+  or contrib NFS storage, fixing the $HOME/pw quota warning that Parallel Works
+  triggers on an on-prem system, estimating cost with the PW cost calculator or
+  real-time dashboard, watching the project allocation freeze thresholds, or
+  moving cloud data with Globus and its egress charges.
+compatibility: Script-authoring skill; no login required. Using the cloud needs a NOAA account, a project allocated to a cloud resource, and sign-in through the NOAA RDHPCS Portal with CAC or YubiKey.
 metadata:
   version: "1.0"
   system: cloud
@@ -1565,20 +1566,28 @@ allowed-tools: Read Write Grep Glob
 
 Body sections:
 
-1. **`# RDHPCS Cloud`** — two distinct services: **ad-hoc clusters** provisioned on demand, and **ParallelWorks** remote access to the on-prem RDHPCS systems. Say which one a user wants before writing anything, because the job script differs.
-2. **`## Two Ways to Use It`** table: ad-hoc cluster (you request a cluster through ACTIVATE, you own the head node and compute nodes, Slurm runs inside the cluster) versus ParallelWorks (a browser-delivered session that reaches an on-prem system's head node, so the machine rules of Hera, Ursa, Orion, Hercules, or Gaea still apply).
-3. **`## Interactive Work`** — with an approved project, Jupyter and VS Code run on a **Slurm compute node**, not the head node. Author the allocation or job so the notebook or server lands on a compute node.
-4. **`## Storage`** table: Lustre parallel filesystem; bucket and block blob storage; the `contrib` filesystem for project-managed software and shared data. Note that storage type is chosen at cluster request time, that the RDHPCS cost calculator prices the choices, and that usage reports show consumption after the fact.
-5. **`## Quota Warnings`** — quota warning messages from the on-prem systems are forwarded into the cloud environment, so a warning seen in the cloud may describe an on-prem `/home` or scratch quota, not a cloud one. Check which system the message names before acting.
-6. **`## Job Scripts`** — Slurm on an ad-hoc cluster uses the same directives as the on-prem systems, but the node shape is whatever the requested cluster provides. The skill must instruct the reader to read the live shape rather than reuse an on-prem number:
+1. **`# RDHPCS Cloud`** — "The RDHPCS Cloud Platform allows NOAA users to create a custom HPC cluster on an as-needed basis", managed by the **Parallel Works** platform across **AWS, Google Cloud Platform, and Azure** through the NOAA RDHPCS Portal, customized for NOAA. The same platform **can also manage on-premise resources, with identical operation**, so a session may be driving a cloud cluster or an on-prem system.
+2. **`## Two Ways to Use It`** table: a cloud cluster (you configure and start it, Slurm runs inside it, you pay per run) versus Parallel Works access to an on-prem HPC system (PW authenticates to the on-prem system, so that machine's rules still govern the work). Sign-in path: log into the Parallel Works NOAA Portal, **Continue with NOAA SSO** with your NOAA username, authenticate with CAC or YubiKey, then use the **Compute** tab (power button starts/stops clusters, "i" shows the login-node IP to ssh to the master node, gear opens the cluster configuration). Cloud projects start with `ca-` (AWS), `cg-` (GCP), or `cz-` (Azure) and you must be on a project allocated to a cloud resource. On-prem access through PW is allowed only from a published list of countries.
+3. **`## Interactive Work`** — Jupyter and VS Code belong on a **compute node**, not the head node: the Jupyter workflow runs on a Slurm compute node (set *Directory To Start Jupyter Lab GUI*, and configure a partition with the instance type you need — GPU instances require selecting a GPU instance type in the partition), and a VS Code session should use **Compute Target → Request new worker** (which provisions a new node) or the VS Code workflow with the **Schedule Job** toggle set to Yes and Slurm submission information filled in. From the head node you can `ssh` to a compute node by hostname when the node is powered on — check with `sinfo`/`squeue`; suspended nodes show as `idle~`.
+4. **`## Storage`** table for the three types available on a cluster: **Lustre** (parallel filesystem, ephemeral or persistent, attach/mount from the Storage tab, accessible **only from an active cluster**, resizable at 2.8 TB chunk multiples, and "expensive"), **bucket/blob storage** (S3 bucket on AWS, bucket on GCP, Blob on Azure which acts as both bucket and NFS; AWS/GCP projects can create and mount many buckets; the project default bucket is reachable from the public domain using keys), and the **contrib filesystem** (like on-prem contrib: team collaboration, custom libraries, user scripts; built on the provider's native NFS — EFS, Azure Files, GCP Filestore). Pricing differs: AWS contrib is **$0.30 per GB per month based on usage**, Azure charges on usage, and **GCP charges on allocated volume — the default 2.5 TiB costs about $768 per month**, which is why an unused default volume can be removed by request (email the cloud help desk with subject "Remove Contrib Volume"). PW bucket credentials reset after **12 hours** for security; the PW token service issues a token lasting up to 24 hours.
+5. **`## Quota Warnings from Parallel Works`** — the real mechanism (the opposite of a forwarded cloud warning): **Parallel Works copies programs and data into `$HOME/pw` on the system it is driving**, which can blow a storage quota — the guide's own example is running the VS Code workflow **on Hera**, where `$HOME` quota is small. Fix it by relocating the directory to project space and symlinking:
+
+   ```bash
+   mv $HOME/pw /project/space/pw && ln -s /project/space/pw $HOME/pw
+   # or, if $HOME/pw does not exist yet:
+   mkdir -p /project/space/pw && ln -s /project/space/pw $HOME/pw
+   ```
+
+6. **`## Cost and Allocation Governance`** — estimate before you run: the **Cost Calculator** (Resources tab → double-click the resource definition → Definition tab shows a dynamic hourly estimate; multiply by run time, then by the number of runs for a project allocation), the **real-time Cost dashboard** (Time Filter "RT", refreshed every 5 minutes), and core-hours arithmetic (in **GCP two vCPUs make one physical core**, so `a2-highgpu-1` with 12 vCPUs is 6 cores). Runtime is not the whole bill: contrib filesystem, object storage, and **egress** cost money, and **all egress charges from a Globus endpoint transfer are applied to the project — including data pulled from public free-to-access repositories such as NOAA Open Data Dissemination (NODD)**. Allocation actions: at **85%** PI/TL/admin get email and everything keeps running; at **90%** no new cluster or job may start and you must move data out of contrib and object storage ("Freeze" on the dashboard); at **95%** all compute resources are terminated and removed and the project is disabled; at **99.5%** resources are manually removed. Usage reporting: the PW cost dashboard, a **daily NOAA Cloud Usage Report** to PIs and Tech Leads, and a **monthly** all-projects report for portfolio managers. Best practices: enable runtime alerts, set a session cost limit, and when stopping a cluster choose **Destroy** unless you need to preserve boot-disk changes (**Hibernation** keeps them but keeps charging for the boot disk).
+7. **`## Job Scripts`** — Slurm runs inside the cloud cluster with the same directives as on-prem, but the node shape is whatever the cluster's partitions provide; the marketplace default configuration ships two partitions, `compute` and `batch`, with dynamic node names such as `compute-dy-c5n18xlarge-1` and `max_node_num` bounds. Read the live shape rather than reusing an on-prem number:
 
    ```bash
    sinfo -N -l
    scontrol show node | head -20
    ```
 
-7. **`## Common Gotchas`** — treating a ParallelWorks session as a separate scheduler when the on-prem machine still governs it; running Jupyter or VS Code on the head node instead of a compute allocation; assuming on-prem node sizes for an ad-hoc cluster; choosing storage without consulting the cost calculator; acting on a forwarded quota warning as though it were a cloud quota.
-8. **`## Additional Resources`** — cloud guide URL.
+8. **`## Common Gotchas`** — assuming a PW session is a separate scheduler when the target system still governs it; running Jupyter or VS Code on the head node instead of requesting a worker/compute node; letting `$HOME/pw` fill an on-prem home quota; treating Lustre as durable archive (it is only accessible from an active cluster, and is expensive); leaving a GCP default contrib volume attached and paying for allocated capacity; expecting PW bucket keys to last (12-hour reset); ignoring egress charges when using a Globus endpoint out of the cloud; letting a project cross 90% of its allocation and losing the ability to start jobs.
+9. **`## Additional Resources`** — cloud guide URL, the Parallel Works user guide URL, and the cloud help desk address.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -1596,9 +1605,9 @@ Expected: exit 0, zero `error` findings.
 git add skills/hpc-skills/rdhpcs-cloud tests/test_rdhpcs_consistency.py
 git commit -m "Add rdhpcs-cloud skill
 
-Ad-hoc clusters and ParallelWorks access are easy to conflate, so the
-skill separates them, keeps node shape discovery on the reader, and
-explains that forwarded quota warnings may describe on-prem filesystems.
+Ad-hoc clusters and Parallel Works on-prem access are easy to conflate, so the
+skill separates them, keeps node shape discovery on the reader, and documents
+the $HOME/pw quota failure PW causes on the on-prem system it drives.
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
 ```
