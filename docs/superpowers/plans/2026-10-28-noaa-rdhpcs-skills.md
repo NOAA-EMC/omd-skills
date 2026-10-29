@@ -1182,15 +1182,17 @@ Create `skills/hpc-skills/rdhpcs-gaea/SKILL.md`. Frontmatter:
 ```markdown
 ---
 name: rdhpcs-gaea
-description: >
+description: >-
   NOAA RDHPCS Gaea system at Oak Ridge National Laboratory's NCCS, a federated
-  Slurm cluster with HPE Cray EX3000 compute and the Cray Programming
+  Slurm cluster with HPE Cray EX 3000 compute and the Cray Programming
   Environment. Use when writing Slurm jobs for Gaea, selecting the c5, c6, c7,
-  or es cluster with -M or --clusters, choosing the batch, debug, urgent, long,
-  novel, or windfall QOS, targeting C5, C6, or C7 AMD EPYC node generations,
-  using the dtn_f5_f6 partition with --constraint=f5 or --constraint=f6, placing
-  data on the cluster-specific /gpfs/f5, /gpfs/f6, or /gpfs/f7 filesystems, or
-  compiling with the cc, CC, and ftn Cray wrappers and PrgEnv modules.
+  or es cluster with -M or --clusters, choosing the batch or novel partition or
+  the normal, debug, urgent, windfall, dtn, ppan, hpss, or interactive QOS,
+  targeting C5, C6, or C7 AMD EPYC node generations, using the dtn_f5_f6
+  partition with --constraint=f5 or --constraint=f6, placing data on the
+  cluster-specific /gpfs/f5, /gpfs/f6, or /gpfs/f7 filesystems or the
+  /ncrc/home[12] and /ncrc/proj NFS areas, or compiling with the cc, CC, and
+  ftn Cray wrappers and PrgEnv modules.
 compatibility: Script-authoring skill; no login required. Submitting jobs requires CAC/PIV or YubiKey access through a Gaea bastion and a signed master certificate.
 metadata:
   version: "1.0"
@@ -1205,16 +1207,16 @@ allowed-tools: Read Write Grep Glob
 
 Body sections, in order, with exactly these facts:
 
-1. **`# Gaea — NOAA RDHPCS at ORNL NCCS`** — a DOE/NOAA collaborative system at Oak Ridge, the largest RDHPCS machine: HPE Cray EX3000, more than 20 PFLOPS aggregate, two-plus 75 PB IBM Spectrum Scale (GPFS) file systems, HPE Slingshot interconnect.
+1. **`# Gaea — NOAA RDHPCS at ORNL NCCS`** — a DOE/NOAA collaborative system at Oak Ridge, the largest RDHPCS machine: three HPE Cray EX 3000 cabinets (C5/C6/C7) with aggregate peak **more than 54 petaflops**, three IBM Spectrum Scale (GPFS) file systems totalling **over 220 PB** (F5 75 PB, F6 75 PB, F7 70 PB), HPE Slingshot interconnect.
 2. **`## System Overview`** table, one row per generation:
 
-   | Cluster | Nodes | CPU | Cores per node | Memory per node | ISA | Interconnect |
-   |---------|-------|-----|----------------|-----------------|-----|--------------|
-   | C5 | 1,920 | 2× 64-core AMD EPYC Zen 2 | 128 (2 threads per core) | 256 GB | AVX-2 | HPE Slingshot |
-   | C6 | 2,048 | 2× 96-core AMD EPYC Zen 4 | 192 | 384 GB | AVX-512 | HPE Slingshot |
-   | C7 | 1,208 | 2× 192-core AMD EPYC Zen 5c (Turin) | 384 | 768 GB | AVX-512 | HPE Slingshot-11 |
+   | Cluster | Nodes | CPU | Cores per node | Memory per node | NUMA | ISA | Peak | Interconnect |
+   |---------|-------|-----|----------------|-----------------|------|-----|------|--------------|
+   | C5 | 1,920 | 2× AMD EPYC 7H12 2.6 GHz 64-core | 128 | 256 GB | 8 | AVX-2 | 10.22 PF | 2× Slingshot 100 Gbps |
+   | C6 | 2,048 | 2× AMD EPYC 9654 2.4 GHz 96-core | 192 | 384 GB | 8 | AVX-512 | 15.1 PF | 1× Slingshot 200 Gbps |
+   | C7 | 1,208 | 2× AMD EPYC 9965 2.0 GHz 192-core (Zen 5c Turin) | 384 | 768 GB | 4 | AVX-512 | 29 PF | 1× Slingshot-11 200 Gbps |
 
-   Then state plainly that **login nodes are a separate set with different memory** (`gaea5[1-6]` 512 GB, `gaea6[1-6]` 512 GB, `gaea7[1-6]` 1.6 TB) and must never be quoted as compute-node memory. OS: SLES 15.5 (Cray OS 3.1.0-28) on C5 and C6, RHEL 9.8 on C7. NUMA domains: 8 on C5 and C6, 4 on C7.
+   Then state plainly that **login nodes are a separate set with different core counts and memory** (`gaea5[1-6]` 128 cores / 512 GB, `gaea6[1-6]` 192 cores / 512 GB, `gaea7[1-6]` **320 cores** / 1.6 TB) and must never be quoted as compute-node specs. OS: Cray OS 3.1.0-28 (SLES 15.5) on C5 and C6, **RHEL 9.8 "Plow"** on C7; discover versions with `cat /opt/cray/etc/release/cos-base` and `lsb_release -a`.
 3. **`## Critical Requirements`** — `-A <projectID>` mandatory; **`-M <cluster>` selects the Slurm cluster** because Gaea is a Slurm **federation** of `c5`, `c6`, `c7`, and `es`, and scheduler commands default to the cluster you are standing on; the GPFS area must match the cluster (`/gpfs/f5` for C5, `/gpfs/f6` for C6, `/gpfs/f7` for C7).
 4. **`## Slurm Federation`**:
 
@@ -1222,10 +1224,11 @@ Body sections, in order, with exactly these facts:
 squeue --clusters=c6            # or -M c6
 export SLURM_CLUSTERS=c5,es     # change the default for a session
 #SBATCH -M c5                   # script form
+scontrol --cluster c6 show partition   # authoritative partition list per cluster
 ```
 
-   Clusters: `c5`, `c6`, `c7` are compute; `es` holds all login and data transfer nodes. Partitions documented in the guide are `batch` (compute) and `dtn_f5_f6` on `es` for data movement, where `--constraint=f5` or `--constraint=f6` selects which GPFS generation the node mounts. Discover the rest with `sinfo` rather than assuming names.
-5. **`## QOS`** — names `batch`, `debug`, `urgent`, `long`, `novel`, `windfall`, and the Gaea two-allocation model: 50% of capacity is reserved for high priority (`urgent`, plus `novel` for jobs needing more than 25% of system cores, normally run in the 8-hour window right after preventative maintenance when nothing else is running), and 50% for `batch`, debug, and interactive work; `windfall` charges nothing. Read limits with `sacctmgr show qos format=Name,MaxWall`. Do **not** restate the Hera/Ursa wall-time numbers as Gaea's, and do not use `Max walltime` or `Billing TRES` column headers.
+   Clusters: `c5`, `c6`, `c7` are compute; `es` holds all login and data transfer nodes. **Documented partitions** (they are partitions, not QOS): on C5 and C6, `batch` (1–512 nodes, default 12:00:00, max 16:00:00) and `novel` (513 nodes up, enabled only right after system maintenance — "alert the help desk" if it is inactive); on `es`, `eslogin_c5`, `eslogin_c6`, `dtn_f5_f6`, `cron_c5`, `cron_c6` (all 1 node, 12:00:00 default / 16:00:00 max). **No C7 partitions are documented — say so and discover with `scontrol --cluster c7 show partition` rather than inventing names.** `--constraint=f5` or `--constraint=f6` on `dtn_f5_f6` selects which GPFS file system the DTN mounts (auto-selected from your origin cluster C5/C6/C7).
+5. **`## QOS`** — Gaea's documented QOS are `normal` (default), `debug` (highest priority, 1 h max), `urgent`, `windfall` (no charge, no fair-share effect, lowest priority), `dtn`, `ppan`, `hpss` (the last two paused during PPAN/HPSS maintenance windows), plus `interactive` which Slurm adds automatically to `salloc` jobs (**one interactive job per user**). Restate Gaea's own table with its own column names (`QOS | Priority Factor | Usage Factor | Max Walltime | Clusters | Description`) — normal .85/1.00/16 h on C5,C6,ES; debug 1.00/1.00/1 h; urgent .95/1.00/16 h; windfall .00/.00/16 h; dtn, ppan, hpss .00/1.00/16 h on ES. The fleet policy behind it: two 50/50 allocations, `urgent` (and `novel`-partition jobs needing >25% of system cores, run in the 8-hour window right after preventative maintenance) against `batch`/`debug`/`interactive`; largest job ≤25% of cores except on `novel`; job segments ≤12 h; windfall via `sbatch --qos=windfall`. Discover with `sacctmgr show qos format=name,priority,usagefactor,maxwall`, `sprio`, `sshare`. Do **not** restate the Hera/Ursa wall-time numbers as Gaea's, and do not use the `Max walltime` or `Billing TRES` column headers (the consistency test's shared-policy shape).
 6. **`## Minimal Job Script`**:
 
 ```bash
@@ -1234,41 +1237,42 @@ export SLURM_CLUSTERS=c5,es     # change the default for a session
 #SBATCH -A myproject
 #SBATCH -J RunSim123
 #SBATCH -p batch
-#SBATCH -q batch
 #SBATCH -N 16
 #SBATCH --ntasks-per-node=192
 #SBATCH -t 4:00:00
 #SBATCH -o %x-%j.out
 
-module load PrgEnv-intel
+module load PrgEnv-gnu
 cd /gpfs/f6/${SLURM_ACCOUNT}/scratch/${USER}/Run.456
 srun ./my_app
 ```
 
+   No `-q` line: `normal` is the default QOS. Windfall work adds `#SBATCH --qos=windfall`.
+
 7. **`## Storage`** table:
 
-   | Area | Path | Permissions | Backed up | Purged | Available from |
-   |------|------|-------------|-----------|--------|----------------|
-   | Member work | `/gpfs/f5/<projID>/scratch/<user>` | user-set | No | No | C5 only |
-   | Project work | `/gpfs/f5/<projID>/proj-shared` | 770 | No | No | C5 only |
-   | World work | `/gpfs/f5/<projID>/world-shared` | 775 | No | No | C5 only |
+   | Area | Path | Permissions | Quota | Backed up | Purged | Available from |
+   |------|------|-------------|-------|-----------|--------|----------------|
+   | Member work | `/gpfs/f5/<projID>/scratch/<userID>` | user-set | N/A | No | No | C5 only |
+   | Project work | `/gpfs/f5/<projID>/proj-shared` | 770 | N/A | No | No | C5 only |
+   | World work | `/gpfs/f5/<projID>/world-shared` | 775 | N/A | No | No | C5 only |
 
-   State that the same three areas exist on `/gpfs/f6` (C6 only) and `/gpfs/f7` (C7 only), that `/home` is NFS and mounted on the DTNs, that `/nobackup` exists for large non-persistent output, and that all extensive I/O, large local copies, and every off-Gaea transfer run on DTNs.
-8. **`## Programming Environment`** — Cray CPE: `module load PrgEnv-intel` / `PrgEnv-gnu` / `module swap`, `craype-*` target modules, and the `cc`, `CC`, and `ftn` wrappers that link MPI automatically; `cray-mpich`; discover with `module avail`.
-9. **`## Common Gotchas`** — running `squeue` and seeing nothing because you are on the wrong federation cluster; writing to `/gpfs/f6` from a C5 job; omitting `-M`; landing on a DTN without the needed `--constraint` so the file system is not mounted; quoting login-node memory as compute memory; `novel` without a ticket; building on a login node; treating GPFS scratch as backup.
+   State that the same three areas exist on `/gpfs/f6` (C6 only) and `/gpfs/f7` (C7 only); home is NFS at `/ncrc/home[12]/<userID>` (**50 GB**, backed up with hourly/daily snapshots, never purged, available on compute nodes) with a 100 GB `/ncrc/proj/<projID>` project home; **there is no `/nobackup` area on Gaea** — scratch *is* the non-persistent area. All extensive I/O, large local copies, and every off-Gaea transfer run on DTNs (`dtn[50-79]` mount F5, `dtn[01-09]` mount F6, both mount `$HOME`). Check usage with `quota -Qs`; F5 has transparent lz4 compression (files idle >168 h), F6 does not; decompress one file with `mmchattr --compression no -I yes <file>`.
+8. **`## Programming Environment`** — Cray CPE: `module load PrgEnv-aocc` / `PrgEnv-cray` / `PrgEnv-gnu` / `PrgEnv-intel` / `PrgEnv-nvhpc`, `module swap`, and the `cc`, `CC`, and `ftn` wrappers (CCE also exposes `craycc`/`craycxx`/`crayftn`) that link Cray MPICH automatically; add `-craype-verbose` to see include/link lines. **CPE reaches end of support at version 26.03, and C7 no longer loads CPE by default** — the default environment is whatever is active at login (the guide suggests a `load_cpe` alias for legacy workflows). Discover with `module avail` and `module -t list`.
+9. **`## Common Gotchas`** — running `squeue` and seeing nothing because you are on the wrong federation cluster; writing to `/gpfs/f6` from a C5 job; omitting `-M`; landing on a DTN without the needed `--constraint` so the file system is not mounted; quoting login-node memory as compute memory; `novel`-partition jobs when the partition is not enabled after maintenance (contact the help desk); building on a login node; treating GPFS scratch as backup; **never appending `/bin/bash` to `salloc`** (it starts the allocation on the login node); `--threads-per-core=2` must be requested in the `sbatch`/`salloc` as well as `srun`; `-S <cores>` reserves cores per node that the application cannot use; no two jobs should touch the same files (hard/soft links can lock up the MDS); no conda/spack environments on GPFS — keep them in `/ncrc/home[12]/$USER`, `/ncrc/proj`, or request a `/usw` location; no development work (especially git) on F5; transfers larger than 2 TB to GFDL archive are slow — use Globus.
 10. **`## Additional Resources`** — three `references/` links plus the Gaea guide URL.
 
 - [ ] **Step 4: Write `references/job-scripts.md`**
 
-Create `skills/hpc-skills/rdhpcs-gaea/references/job-scripts.md` (~230 lines) titled `# Gaea Job Scripts Reference`. Sections: directive table including `-M`, `-p`, `-q`, `--constraint`, and per-cluster cores (128/192/384); C5 MPI job; C6 MPI job; C7 job; hybrid MPI+OpenMP with `OMP_PROC_BIND=spread` and `OMP_PLACES=cores` across the 8 NUMA domains; debug-QOS single-node job; `novel` job with the ticket and post-maintenance-window note restated; DTN data-movement job on `es` / `dtn_f5_f6` with `--constraint=f5`; interactive `salloc`; an MPMD `srun` example using `--multi-line` with two `./app` lines.
+Create `skills/hpc-skills/rdhpcs-gaea/references/job-scripts.md` (~230 lines) titled `# Gaea Job Scripts Reference`. Sections: directive table including `-M`, `-p`, `-q`, `--constraint`, `-N`, `-t`, `-S`, `--threads-per-core`, `--signal`, `--reservation`, and per-cluster cores (128/192/384); C5 MPI job (128 tasks/node); C6 MPI job (192 tasks/node); C7 job (384 tasks/node); hybrid MPI+OpenMP using the guide's own `srun -N 2 -n 4 --ntasks-per-node=2 ./a.out` form with `--cpu-bind=threads` (the default) and `--threads-per-core` (the guide documents **no** `OMP_PROC_BIND`/`OMP_PLACES` examples — do not invent them); `debug`-QOS single-node job; `novel`-partition job with the post-maintenance/"alert the help desk" note restated; DTN data-movement job on `es` / `dtn_f5_f6` with `--constraint=f5`; interactive `salloc` (with the no-`/bin/bash` warning); `srun` MPMD example only if `slurm/overview.html` documents the syntax — otherwise omit it. Monitoring: `squeue -l -u $USER`, `scontrol show job`, `sacct -a -X`, `sacct -j 12345 -S 2022-07-01T13:00:00 -o "jobid%5,jobname%25,nodelist%20" -X`, `scontrol hold/release/update NumNodes=`, `scancel -s SIG`.
 
 - [ ] **Step 5: Write `references/storage.md`**
 
-Create `skills/hpc-skills/rdhpcs-gaea/references/storage.md` (~170 lines) titled `# Gaea Storage Reference`. Sections: the F5/F6/F7 area table (member `scratch`, `proj-shared` 770, `world-shared` 775) with the cluster-availability restriction; NFS `/home` and `/nobackup`; GPFS performance tips from the guide; quota checking on Gaea; moving data to and from Gaea through DTNs and the firewall-exception request process for external transfers; the "not backed up and not purged" caution that makes GPFS scratch neither durable nor safe to abandon.
+Create `skills/hpc-skills/rdhpcs-gaea/references/storage.md` (~170 lines) titled `# Gaea Storage Reference`. Sections: the F5/F6/F7 area table (member `scratch`, `proj-shared` 770, `world-shared` 775) with the cluster-availability restriction; NFS `/ncrc/home[12]` (50 GB, backed up, not purged) and `/ncrc/proj` (100 GB); `quota -Qs` sample output; GPFS compression on F5 (lz4, idle >168 h, exclusions `/.SpaceMan/`, `/fs_audit_log/`, `/.snapshots/`, `/.msgq/`; `mmchattr --compression no -I yes` to decompress; no direct ratio command — compare `ls` vs `du`); the guide's performance tips and known issues (MDS lockup from shared files, F5 hangs/slow reads tied to compression, F5 not backed up); DTN data movement (`dtn_f5_f6`, `--constraint`) and the firewall-exception request process plus Globus for large/off-site transfers; the "not backed up and not purged" caution that makes GPFS scratch neither durable nor safe to abandon.
 
 - [ ] **Step 6: Write `references/programming-env.md`**
 
-Create `skills/hpc-skills/rdhpcs-gaea/references/programming-env.md` (~200 lines) titled `# Gaea Programming Environment Reference`. Sections: Environment Modules versus Cray CPE modules; `PrgEnv-*` families and the rule that MPI builds go through `cc`/`CC`/`ftn` rather than calling `gcc` or `ifort` directly; `craype-*` target modules and `cray-mpich`; dynamic linking guidance from the docs; launching with `srun`; debugging with Linaro DDT, GDB, GDB4HPC, Valgrind4hpc; profiling with HPE Performance Analysis Tools; pointers to the guide's known-issues and open-issues pages.
+Create `skills/hpc-skills/rdhpcs-gaea/references/programming-env.md` (~200 lines) titled `# Gaea Programming Environment Reference`. Sections: Lmod (`module -t list/avail/help/show/spider/load/use/unuse/purge/reset/update`; `avail` only shows dependency-compatible modules, `spider` searches the whole hierarchy); the five `PrgEnv-*` families with their compiler names from the guide table (aocc: `cc`→clang, `CC`→clang++, `ftn`→flang; cce: `craycc`/`craycxx`/`crayftn`; gcc-native: `gcc`/`g++`/`gfortran`; intel: `icx`/`icpx`/`ifort`; nvhpc: `nvc`/`nvc++`/`nvfortran` — NVHPC deprecated since 24.11 in favour of NVIDIA); the rule that MPI builds go through `cc`/`CC`/`ftn` rather than calling `gcc` or `ifort` directly; `cray-mpich` and the module-swap-does-not-change-runtime-libraries trap; dynamic linking (order RPATH → `LD_LIBRARY_PATH` → `/etc/ld.so.conf`, `/opt/cray/pe/lib64` always searched, fix mismatches with `-Wl,-rpath,<path>` or prepending `${CRAY_LD_LIBRARY_PATH}`); CPE EOL at 26.03 and C7's no-default-CPE behaviour with the `load_cpe` alias; launching with `srun`; debugging with Linaro DDT, GDB, GDB4HPC, Valgrind4hpc; profiling with HPE Performance Analysis Tools; software-support scope (only `/opt` and `/sw` modules are RDHPCS-supported; user stacks in `/ncrc/home[12]`, `/usw`, `/ncrc/proj` are self-supported); pointers to the guide's known-issues and open-issues pages.
 
 - [ ] **Step 7: Run test to verify it passes**
 
@@ -1282,8 +1286,10 @@ Expected: exit 0, zero `error` findings.
 
 - [ ] **Step 9: Commit**
 
+Global constraint: `README.md` (skill tree, auto-derived by `tools/repo_inventory.py`) and `skills/hpc-skills/ATTRIBUTION.md` must be updated in the *same* commit that adds the skill directory.
+
 ```bash
-git add skills/hpc-skills/rdhpcs-gaea tests/test_rdhpcs_consistency.py
+git add skills/hpc-skills/rdhpcs-gaea tests/test_rdhpcs_consistency.py README.md skills/hpc-skills/ATTRIBUTION.md
 git commit -m "Add rdhpcs-gaea skill
 
 Gaea's Slurm federation (-M c5/c6/c7/es) and cluster-specific GPFS areas
