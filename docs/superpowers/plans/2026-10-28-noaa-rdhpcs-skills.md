@@ -298,13 +298,18 @@ come from [docs.rdhpcs.noaa.gov](https://docs.rdhpcs.noaa.gov).
 
 ### Access
 
-All RDHPCS access is SSH through a site bastion, authenticated with a CAC/PIV
-card or a YubiKey:
+Access to the systems RDHPCS operates directly is SSH through a site bastion,
+authenticated with a CAC/PIV card or a YubiKey:
 
 ```text
 <system>-mfa.princeton.rdhpcs.noaa.gov
 <system>-mfa.fairmont.rdhpcs.noaa.gov
 ```
+
+Orion and Hercules are hosted by Mississippi State University and are **not**
+behind those bastions: you SSH to `orion-login.hpc.msstate.edu` or
+`hercules-login.hpc.msstate.edu` with an MSU username, MSU password and Duo,
+or use Open OnDemand.
 
 The first login attempt generates a master certificate request that must be
 signed before you get a full session, usually in under five minutes. The
@@ -319,7 +324,7 @@ Specify with `--qos=<name>` or `#SBATCH --qos=<name>`.
 | QOS | Max walltime | Max cores | Billing TRES | Limits |
 |-----|-------------|-----------|--------------|--------|
 | `batch` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 1 | Default QOS for projects with more than a windfall-only allocation |
-| `urgent` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 2 | One pending and one running job per project. FairShare drops at twice the batch rate; below FairShare 0.45 the job is silently changed to `batch` |
+| `urgent` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 2 | One job per project pending or running. FairShare drops at twice the batch rate; below FairShare 0.45 the job is changed to `batch` and the user is notified on stderr |
 | `debug` | 30 mins | 8400 (Hera) / 14400 (Ursa) | 1.25 | Two jobs per user. Highest priority; not for general fast-turnaround work |
 | `long` | 16 hours | 4200 (Hera) / 7296 (Ursa) | 1 | Normal priority for 8 to 16 hour jobs |
 | `windfall` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 0 | Lowest priority, charges nothing, does not lower FairShare |
@@ -358,9 +363,12 @@ Exceptions are covered by the RDHPCS Login Node Usage Policy.
 
 ### Recurring work
 
-Prefer `scrontab` over `cron`. Where `cron` exists it is limited to specific
+Prefer `scrontab` over `cron`. On Gaea and PPAN `cron` is not permitted at all
+and `scrontab` must be used. Where `cron` exists it is limited to specific
 front ends (Orion `orion-login-1`, Hercules `hercules-login-1`; Mercury runs
-its own CRON service).
+its own CRON service). The MSU guide documents plain `cron` only and does not
+mention `scrontab`, so check `scrontab --help` on Orion or Hercules before
+relying on it.
 
 ### File systems
 
@@ -529,7 +537,7 @@ sinfo -O partition     # hera* service bigmem novel  (asterisk marks the default
 | QOS | Max walltime | Max cores | Billing TRES | Limits |
 |-----|-------------|-----------|--------------|--------|
 | `batch` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 1 | Default QOS for projects with more than a windfall-only allocation |
-| `urgent` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 2 | One pending and one running job per project. FairShare drops at twice the batch rate; below FairShare 0.45 the job is silently changed to `batch` |
+| `urgent` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 2 | One job per project pending or running. FairShare drops at twice the batch rate; below FairShare 0.45 the job is changed to `batch` and the user is notified on stderr |
 | `debug` | 30 mins | 8400 (Hera) / 14400 (Ursa) | 1.25 | Two jobs per user. Highest priority; not for general fast-turnaround work |
 | `long` | 16 hours | 4200 (Hera) / 7296 (Ursa) | 1 | Normal priority for 8 to 16 hour jobs |
 | `windfall` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 0 | Lowest priority, charges nothing, does not lower FairShare |
@@ -893,7 +901,12 @@ Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
 
 **Interfaces:**
 - Consumes: `MACHINE_SKILLS`, the Task 2 skeleton.
-- Produces: the "QOS names only, no checked columns" pattern that Tasks 5 and 6 reuse for systems RDHPCS does not publish a per-system QOS table for.
+- Produces: the "quote the operator's own QOS table under its own column names"
+  pattern that Task 5 reuses for Hercules. MSU-HPC publishes a per-QOS table for
+  Orion and Hercules, but with `Maximum Wall Clock` / `Billing TRES Factor`
+  headers and a node-count dimension, so the consistency guard (which keys on
+  `Max walltime` / `Billing TRES`) does not cross-check it. Gaea (Task 6)
+  publishes a differently-shaped table again.
 
 - [ ] **Step 1: Declare the expected skill in the test**
 
@@ -923,9 +936,9 @@ description: >
   orion, bigmem, or service partition, requesting Skylake 40-core nodes, working
   with MSU-HPC account management that is separate from RDHPCS accounts,
   placing data on the work or work2 Lustre scratch filesystems or the 10 GB NFS
-  home, using scrontab or cron on orion-login-1, or discovering LMOD compiler
-  and MPI modules on Orion.
-compatibility: Script-authoring skill; no login required. Accounts and access are managed by MSU HPC2 independently of RDHPCS, so MSU authentication is required.
+  home, using cron on orion-login-1, or discovering LMOD compiler and MPI
+  modules on Orion.
+compatibility: Script-authoring skill; no login required. Orion is hosted at Mississippi State University, so access uses MSU credentials and Duo rather than the NOAA RDHPCS bastions.
 metadata:
   version: "1.0"
   system: orion
@@ -939,7 +952,7 @@ allowed-tools: Read Write Grep Glob
 
 Body sections, in this order, with exactly these facts:
 
-1. **`# Orion — MSU-HPC (NOAA RDHPCS)`** — NOAA's allocation on the Mississippi State University HPC2 system. Slurm with LMOD; Rocky 9.1.
+1. **`# Orion — MSU-HPC (NOAA RDHPCS)`** — NOAA's allocation on the Mississippi State University HPC2 system. Slurm with LMOD; **CentOS 7.x** (the MSU guide's login banner shows 7.6 and its differences section states Orion runs CentOS 7.x while Hercules runs Rocky Linux 9.x).
 2. **`## System Overview`** table: Dell EMC PowerEdge C6420 nodes; Intel Xeon Gold 6148, 20 cores × 2 sockets = **40 cores per node** at 2.40 GHz; **1,792 compute nodes plus 8 bigmem nodes** (1,800 total); **72,000 cores**; **192 GB per compute node** (12×16 GB DDR4-2666) and **384 GB per bigmem node** (12×32 GB); Mellanox HDR-100 InfiniBand; 4 login nodes, 4 data transfer nodes, 2 development nodes.
 3. **`## Critical Requirements`** — `-A <account>` mandatory; **always set `-t`**, because the default wall clock is **5 minutes** and an unset job is silently killed at 5 minutes; do not request less than 5 minutes; over-requesting hurts everyone through longer waits and worse scheduler efficiency.
 4. **`## Partitions`** table:
@@ -950,13 +963,28 @@ Body sections, in this order, with exactly these facts:
    | `bigmem` | batch, windfall, debug, urgent | 8 nodes with 384 GB |
    | `service` | batch, windfall, debug, urgent | Serial jobs, maximum **1 core**, 24 hour limit, runs on front ends with external network and HPSS access |
 
-5. **`## QOS`** — name the QOS available on Orion (`batch`, `windfall`, `debug`, `urgent`, `novel`) and say RDHPCS publishes the fleet QOS semantics in its queue policy rather than per-system limits for Orion, so read the live limits:
+5. **`## QOS`** — MSU-HPC **does** publish a per-QOS table for Orion and Hercules, with limits expressed in **nodes** rather than cores. Quote it under **MSU's own column names** (`Minimum Nodes`, `Maximum Nodes`, `Maximum Wall Clock`, `Billing TRES Factor`) so the guard does not attempt a cell-by-cell comparison against the fleet table, and state that the wall clock and Billing TRES values agree with the fleet table while the node limits, job caps, and `urgent` semantics differ:
+
+   | QOS | Min nodes | Max nodes | Maximum Wall Clock | Billing TRES Factor | Limits |
+   |-----|-----------|-----------|--------------------|---------------------|--------|
+   | `batch` | 1 | 500 | 8 hours | 1.0 | Default QOS for projects with more than a windfall-only allocation |
+   | `urgent` | 1 | 500 | 8 hours | 2.0 | **One job per project pending or running.** FairShare drops at twice the batch rate; below 0.45 the job is changed to `batch` and the user is notified on stderr |
+   | `debug` | 1 | 500 | 30 minutes | 1.25 | Two jobs per user pending or running; highest priority; not for fast-turnaround general work |
+   | `windfall` | 1 | 500 | 8 hours (24 h on `service`) | 0.0 | Lowest priority, charges nothing, does not lower FairShare; the only QOS a windfall-only project may use |
+   | `novel` | 501 | largest partition | 8 hours | 1.0 | Nearly the whole system; requires a help ticket first |
+
+   Every QOS on Orion: at most **400 pending/running jobs per project** (extra
+   jobs are **rejected**), and only 20 jobs per project gain age priority. That
+   is a different cap than the 1500-total/400-running pair RDHPCS publishes for
+   Hera and Ursa, so do not present the fleet numbers as Orion's. Also offer the
+   live read, using the form RDHPCS documents:
 
    ```bash
-   sacctmgr show qos format=Name,MaxWall,PriorityTier,BillingFactors
+   sacctmgr show qos format=Name,MaxWall
    ```
 
-   **Do not** build a table with `Max walltime` or `Billing TRES` column headers here — the consistency guard only cross-checks systems that publish those columns, and RDHPCS has not published them for Orion. Mention that `novel` requires a help ticket.
+   Mention that `novel` requires a help ticket and that Orion has no `long`,
+   `gpu`, or `gpuwf` QOS.
 6. **`## Minimal Job Script`**:
 
 ```bash
@@ -968,35 +996,36 @@ Body sections, in this order, with exactly these facts:
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=40
 #SBATCH -t 4:00:00
-#SBATCH -o /work/myproject/user/myjob_%j.out
+#SBATCH -o /work/noaa/myproject/user/myjob_%j.out
 
-module load intel
-cd /work/myproject/user/run.456
+module load contrib
+module load intel impi
+cd /work/noaa/myproject/user/run.456
 srun ./my_mpi_app
 ```
 
-7. **`## Storage`** table: `/home/First.Last` NFS **10 GB**, backed up nightly; `work` DDN Lustre SFA18k, 9 PB scratch, **not** backed up; `work2` DDN Lustre SFA18k with a hot-pool SSD cache, 18 PB scratch, **not** backed up; node-local `$TMPDIR`; HPSS through HSMS from the `service` partition. Both `work` filesystems are scratch, not archive.
-8. **`## Accounts and Projects`** — MSU HPC2 administers accounts entirely independently of RDHPCS; account and portfolio managers must hold an active MSU account to manage projects online; NOAA portfolio, project, and user management goes through MSU; periodic renewal is required.
-9. **`## Cron and Scrontab`** — `cron` is available on `orion-login-1` only; `scrontab` is preferred for recurring work; `at` for delayed commands exists only on `login1`.
-10. **`## Common Gotchas`** — no `-t` means a 5-minute kill; `-t` below 5 minutes; assuming the 50 GB RDHPCS home quota when Orion gives 10 GB; writing job output to `/home`; scheduling cron on the wrong login node; `novel` without a ticket; using an RDHPCS name where an MSU project name is required; compiling on a login node.
+7. **`## Storage`** table: `/home/<userid>` NFS **10 GB**, backed up nightly; `work` DDN Lustre SFA18k, 9 PB scratch, **not** backed up; `work2` DDN Lustre SFA18k with a hot-pool SSD cache, 18 PB scratch, **not** backed up; HPSS/HSMS reached from the `service` partition. Both `work` filesystems are scratch, not archive, and MSU advises moving data back to Niagara because Orion's disk space is limited. Do **not** list a `$TMPDIR` row — RDHPCS documents node-local temp on the NOAA-operated systems but not on Orion — and do not promise a `.snapshot` recovery path, which the MSU guide does not mention.
+8. **`## Accounts and Projects`** — MSU HPC2 administers accounts entirely independently of RDHPCS; PI and Project/Portfolio Managers must hold an active MSU account to manage projects online; NOAA portfolio, project, and user management goes through MSU; TAPS password change within 3 days plus MSU security and insider-threat training and Duo; accounts lock after 90 days inactivity and are scheduled for deletion 2 weeks after expiry, and the home directory is deleted with the account. The MSU username is **not** the RDHPCS `First.Last` long username. `module load contrib noaatools` then `saccount_params` is the quota and project report (there is no `account_params` alias, and `quota -Qs` is not documented for Orion).
+9. **`## Cron and Recurring Work`** — MSU documents plain **`cron` on `orion-login-1` only**; it does not document `scrontab` for Orion, so tell the reader to check `scrontab --help` before relying on it. `at` exists on `login1` only.
+10. **`## Common Gotchas`** — no `-t` means a 5-minute kill; `-t` below 5 minutes; assuming the 30 GB RDHPCS home quota when Orion gives 10 GB; writing job output to `/home`; scheduling cron on the wrong login node; a second `urgent` job per project being rejected; `novel` without a ticket or below 501 nodes; using an RDHPCS name where an MSU username or project name is required; compiling on a login node; expecting FairShare to carry between Orion and Hercules.
 11. **`## Additional Resources`** — three `references/` links plus https://docs.rdhpcs.noaa.gov/systems/MSU-HPC_user_guide.html
 
 - [ ] **Step 4: Write `references/job-scripts.md`**
 
-Create `skills/hpc-skills/rdhpcs-orion/references/job-scripts.md` (~200 lines) titled `# Orion Job Scripts Reference`, following the Task 2 Step 4 section set (directive table, serial, MPI full-node, OpenMP-only, hybrid, bigmem, array, interactive `salloc`, `service` HPSS/network job, output conventions), with Orion values: 40 cores per node, `orion`/`bigmem`/`service` partitions, `service` capped at 1 core, mandatory `-t` with the 5-minute default called out in the directive table, output under `/work/<project>/<user>`. Add an `## scrontab` section showing a `scrontab`-style recurring entry.
+Create `skills/hpc-skills/rdhpcs-orion/references/job-scripts.md` (~200 lines) titled `# Orion Job Scripts Reference`, following the Task 2 Step 4 section set (directive table, wall-clock discipline, serial, MPI full-node, OpenMP-only, hybrid, bigmem, interactive `salloc`, timed/dependent jobs, `service` network job, recurring work, output conventions, monitoring), with Orion values: 40 cores per node, `orion`/`bigmem`/`service` partitions, `service` capped at 1 core and 24 hours, mandatory `-t` with the 5-minute default called out in the directive table, output under `/work/noaa/<project>/<user>`. MSU does not document job arrays for Orion, so state that rather than inventing an example, and title the recurring-work section `## Cron` (plain cron on `orion-login-1`) because `scrontab` is not documented there. Use MSU's own documented patterns where they exist: `srun -n $SLURM_NTASKS`, `module load intel <version>`, `--export=ALL,<var>=<value>`, `--begin=`, `--mail-user` plus `--mail-type` both required, `-D .` or `cd $SLURM_SUBMIT_DIR`.
 
 - [ ] **Step 5: Write `references/storage.md`**
 
-Create `skills/hpc-skills/rdhpcs-orion/references/storage.md` (~150 lines) titled `# Orion Storage Reference`. Sections: filesystem overview table (10 GB home, `work` 9 PB, `work2` 18 PB with hot pool, `$TMPDIR`, HPSS); quota checks (`saccount_params` — documented on Orion, it prints home quota in MB plus `DiskInUse`/`Quota`/`Files`/`FileQUota` per project directory — `du -sh $HOME`, and `quota -Qs` only if it is present, since the storage page lists `quota` for Gaea, Ursa, Hera and Mercury but not Orion); nightly home backup and the snapshot path; scratch is neither backed up nor long-term storage; hot-pool double counting on `work2`; HPSS/HSMS archiving from the `service` partition; the `/work/<project>/<user>` directory convention; file-count quota advice (tar small files).
+Create `skills/hpc-skills/rdhpcs-orion/references/storage.md` (~150 lines) titled `# Orion Storage Reference`. Sections: filesystem overview table (10 GB home, `work` 9 PB, `work2` 18 PB with hot pool, `/apps`, `/apps/contrib`); which Lustre filesystem to use (MSU's own advice: try both, `work2` has 2x capacity plus an SSD tier that may help small files and random I/O); quota checks (`saccount_params` — documented on Orion, it prints home quota in **MB** plus `DiskInUse`/`Quota`/`Files`/`FileQUota` per project directory — `du -sh $HOME`, `shpcrpt -c orion -s`/`-p <project>`, and `reportFSUsage`, which prints a LUSTRE QUOTA AND USAGE REPORT with `Directory/Group`, `Usage (GB)`, `Quota (GB)`, `Limit (GB)`, `Files`, `Percentage` and `**` on over-quota projects; say plainly that `quota -Qs` is listed for Gaea, Ursa, Hera and Mercury but **not** Orion, and that there is no `account_params` alias); file-count quota advice (tar small files); home backup and deletion policy — state that RDHPCS's `.snapshot` online-backup feature is documented on the fleet data-storage page which does not name Orion, so do not promise it; transfers (SCP/SFTP to `orion-dtn-{1..4}.hpc.msstate.edu` or the round-robin `orion-dtn`, Globus endpoint `msuhpc2-Orion-dtn`, MSU's recommendation to use Globus and to move data back to Niagara); `/apps/contrib` requests and the development-node write gateway; archiving — the MSU guide publishes **no** `hsi`/`htar` example for Orion, so tell the reader to confirm approved archive commands with the help system rather than copying the Hera staging script.
 
 - [ ] **Step 6: Write `references/programming-env.md`**
 
-Create `skills/hpc-skills/rdhpcs-orion/references/programming-env.md` (~180 lines) titled `# Orion Programming Environment Reference`. MSU-HPC publishes the module list rather than a fixed compiler/MPI recommendation, so this file must teach **discovery** instead of asserting pairings: LMOD modules and `module spider`; `module avail` after loading a compiler family; the compiler families and MPI implementations as things to enumerate at runtime; MPI launch patterns with `srun`; OpenMP thread and affinity settings; job-array and hybrid build notes; Python via `module load contrib; module load rdhpcs-python` with the self-support warning; containers through **`module load singularity`** (the RDHPCS container page lists singularity with a required module load on Hercules/Orion — Podman is documented for Gaea and PPAN only, and needs a help-desk access request); debugging and profiling tools where the module tree provides them.
+Create `skills/hpc-skills/rdhpcs-orion/references/programming-env.md` (~180 lines) titled `# Orion Programming Environment Reference`. MSU-HPC publishes the module list rather than a fixed compiler/MPI recommendation, so this file must teach **discovery** instead of asserting pairings: LMOD's hierarchical layout and `module spider` (documented fleet-wide, including the MSU systems); `module avail` after loading a compiler family; the compiler families and MPI implementations as things to enumerate at runtime, using MSU's own `module load intel <version>` / `module load impi <version>` example; `module load contrib noaatools` for the NOAA tooling; module-set environment variables that differ between systems (MSU's WRF/netCDF warning: `NETCDF_C_ROOT`/`NETCDF_FORTRAN_ROOT` must be assembled into one `NETCDF`, `PNETCDF=$PARALLEL_NETCDF_ROOT`); MPI runtime problems MSU documents (node-memory crashes → more nodes or fewer tasks per node plus `--exclusive`; Intel `I_MPI_SHM_HEAP_VSIZE` default 8192 MB, Hercules-only symptom; stack-size segfaults on both); MPI launch patterns with `srun`; OpenMP thread and affinity settings stated as portable defaults because RDHPCS publishes no Orion affinity recipe; Python via `module load contrib` then `module load rdhpcs-python` (or `rdhpcs-conda`, no activation needed) with conda-forge as the only approved channel and Miniforge as the installer; containers through **`module load singularity`**, plus the Spack-managed `module load spack-managed-x86-64_v3/v1.0 apptainer` that loads a separate environment and may not combine well with other modules, the RDHPCS registry at registry.rdhpcs.noaa.gov, and the fact that Podman is documented for Gaea and PPAN only; interactive development (`salloc`, Open OnDemand, Jupyter kernel dir, devel nodes, `tmux` replacing `screen`); and an explicit "what the documentation does not cover" list — debuggers/profilers (RDHPCS names Gaea only), job arrays, build systems, and `$TMPDIR` — so the writer asks the help system instead of inventing.
 
 - [ ] **Step 7: Run test to verify it passes**
 
 Run: `python3 -m unittest tests.test_rdhpcs_consistency -v`
-Expected: `PASS`. If `test_machine_qos_facts_match_slurm` fails, the Orion QOS block was written as a checked table — reduce it to the name list plus the `sacctmgr` command.
+Expected: `PASS`. If `test_machine_qos_facts_match_slurm` fails, the Orion QOS table used the shared-policy column names (`Max walltime` / `Billing TRES`) instead of MSU's own (`Maximum Wall Clock` / `Billing TRES Factor`) — rename the headers back.
 
 - [ ] **Step 8: Validate the skill**
 
@@ -1010,9 +1039,10 @@ git add skills/hpc-skills/rdhpcs-orion tests/test_rdhpcs_consistency.py
 git commit -m "Add rdhpcs-orion skill
 
 Orion's MSU-administered accounts, 10 GB home quota, and 5-minute default
-wall clock are the three things an agent gets wrong without them. QOS
-limits are read from sacctmgr because RDHPCS does not publish a per-system
-table for Orion.
+wall clock are the three things an agent gets wrong without them. MSU
+publishes its own per-QOS table in nodes rather than cores, so the skill
+quotes MSU's column names and flags where the caps differ from the fleet
+policy, with sacctmgr offered for the live wall clocks.
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
 ```

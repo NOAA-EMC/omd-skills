@@ -245,13 +245,18 @@ come from [docs.rdhpcs.noaa.gov](https://docs.rdhpcs.noaa.gov).
 
 ### Access
 
-All RDHPCS access is SSH through a site bastion, authenticated with a CAC/PIV
-card or a YubiKey:
+Access to the systems RDHPCS operates directly is SSH through a site bastion,
+authenticated with a CAC/PIV card or a YubiKey:
 
 ```text
 <system>-mfa.princeton.rdhpcs.noaa.gov
 <system>-mfa.fairmont.rdhpcs.noaa.gov
 ```
+
+Orion and Hercules are hosted by Mississippi State University and are **not**
+behind those bastions: you SSH to `orion-login.hpc.msstate.edu` or
+`hercules-login.hpc.msstate.edu` with an MSU username, MSU password and Duo,
+or use Open OnDemand.
 
 The first login attempt generates a master certificate request that must be
 signed before you get a full session, usually in under five minutes. The
@@ -266,7 +271,7 @@ Specify with `--qos=<name>` or `#SBATCH --qos=<name>`.
 | QOS | Max walltime | Max cores | Billing TRES | Limits |
 |-----|-------------|-----------|--------------|--------|
 | `batch` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 1 | Default QOS for projects with more than a windfall-only allocation |
-| `urgent` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 2 | One pending and one running job per project. FairShare drops at twice the batch rate; below FairShare 0.45 the job is silently changed to `batch` |
+| `urgent` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 2 | One job per project pending or running. FairShare drops at twice the batch rate; below FairShare 0.45 the job is changed to `batch` and the user is notified on stderr |
 | `debug` | 30 mins | 8400 (Hera) / 14400 (Ursa) | 1.25 | Two jobs per user. Highest priority; not for general fast-turnaround work |
 | `long` | 16 hours | 4200 (Hera) / 7296 (Ursa) | 1 | Normal priority for 8 to 16 hour jobs |
 | `windfall` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 0 | Lowest priority, charges nothing, does not lower FairShare |
@@ -305,9 +310,12 @@ Exceptions are covered by the RDHPCS Login Node Usage Policy.
 
 ### Recurring work
 
-Prefer `scrontab` over `cron`. Where `cron` exists it is limited to specific
+Prefer `scrontab` over `cron`. On Gaea and PPAN `cron` is not permitted at all
+and `scrontab` must be used. Where `cron` exists it is limited to specific
 front ends (Orion `orion-login-1`, Hercules `hercules-login-1`; Mercury runs
-its own CRON service).
+its own CRON service). The MSU guide documents plain `cron` only and does not
+mention `scrontab`, so check `scrontab --help` on Orion or Hercules before
+relying on it.
 
 ### File systems
 

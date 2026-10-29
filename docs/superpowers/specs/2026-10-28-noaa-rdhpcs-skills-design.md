@@ -100,10 +100,13 @@ the 64-character limit, so they satisfy the spec's `name` constraints.
 section holding facts true across the RDHPCS fleet, so machine skills state
 their own deltas rather than restating a full table:
 
-- **Access.** SSH through `*-mfa.{princeton,fairmont}.rdhpcs.noaa.gov` bastions
-  with CAC/PIV or YubiKey MFA; first login generates a master certificate
-  request that must be signed before full access; the passphrase must contain
-  at least three words.
+- **Access.** RDHPCS-operated systems (Hera, Ursa, Mercury, Gaea, PPAN, PAN) are
+  reached through `*-mfa.{princeton,fairmont}.rdhpcs.noaa.gov` bastions with
+  CAC/PIV or YubiKey MFA; first login generates a master certificate request that
+  must be signed before full access; the passphrase must contain at least three
+  words. The MSU-hosted systems (Orion, Hercules) are the exception: SSH straight
+  to `orion-login.hpc.msstate.edu` / `hercules-login.hpc.msstate.edu` with an MSU
+  username, password and Duo, or through Open OnDemand.
 - **QOS semantics and billing factors** (from
   `queue_policy/policies.html#qos-table`, which is the authoritative source —
   the per-QOS "Billable TRes" column in the individual system guides shows a
@@ -246,12 +249,20 @@ main failure mode:
 
 - 1,792 compute + 8 bigmem Dell PowerEdge C6420, Skylake 6148 40 cores, 192 GB
   (bigmem 384 GB), HDR-100 IB; 4 login, 4 DTN, 2 development nodes.
+- Operating system is **CentOS 7.x** (the MSU guide contrasts it with Hercules on
+  Rocky Linux 9.x), so nothing in the skill may assume a Rocky 9 userland.
 - Partitions: `orion` (general), `bigmem`, `service` (serial, max 1 core, 24 h).
   QOS allowed: `batch`, `windfall`, `debug`, `urgent`, `novel`.
+- MSU publishes its **own** per-QOS table with node-count limits rather than the
+  fleet's core counts: max 500 nodes (`novel` from 501), wall clocks and Billing
+  TRES factors that agree with the fleet table, and a 400 pending-plus-running job
+  cap per project instead of the fleet's 1500-total/400-running pair. `urgent` and
+  `debug` caps match the fleet wording. The skill quotes MSU's column names so the
+  consistency guard does not force fleet wording.
 - Storage: DDN Lustre `work` (9 PB) and `work2` (18 PB, hot-pool SSD cache),
   both scratch and not backed up; `/home` NFS **10 GB**, backed up nightly.
 - Accounts are MSU HPC2 managed and completely independent of RDHPCS accounts.
-- Cron available on `orion-login-1` only.
+- Cron available on `orion-login-1` only; `scrontab` is not documented for Orion.
 - Default wall clock is 5 minutes if unspecified — jobs silently die at 5
   minutes without `-t`.
 

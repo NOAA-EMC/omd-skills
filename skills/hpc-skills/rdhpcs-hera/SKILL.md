@@ -77,7 +77,7 @@ sinfo -O partition     # hera* service bigmem novel  (asterisk marks the default
 | QOS | Max walltime | Max cores | Billing TRES | Limits |
 |-----|-------------|-----------|--------------|--------|
 | `batch` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 1 | Default QOS for projects with more than a windfall-only allocation |
-| `urgent` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 2 | One pending and one running job per project. FairShare drops at twice the batch rate; below FairShare 0.45 the job is silently changed to `batch` |
+| `urgent` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 2 | One job per project pending or running. FairShare drops at twice the batch rate; below FairShare 0.45 the job is changed to `batch` and the user is notified on stderr |
 | `debug` | 30 mins | 8400 (Hera) / 14400 (Ursa) | 1.25 | Two jobs per user. Highest priority; not for general fast-turnaround work |
 | `long` | 16 hours | 4200 (Hera) / 7296 (Ursa) | 1 | Normal priority for 8 to 16 hour jobs |
 | `windfall` | 8 hours | 8400 (Hera) / 14400 (Ursa) | 0 | Lowest priority, charges nothing, does not lower FairShare |
