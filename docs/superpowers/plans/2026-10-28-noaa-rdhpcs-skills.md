@@ -1443,14 +1443,14 @@ Create `skills/hpc-skills/rdhpcs-mercury/SKILL.md` (no `references/` directory �
 ```markdown
 ---
 name: rdhpcs-mercury
-description: >
+description: >-
   NOAA RDHPCS Mercury data-transfer system for moving data to and from
   collaborators. Use when planning a transfer to or from RDHPCS, deciding
   between Mercury trusted and untrusted data transfer nodes, placing files in
   /collab2/data or /collab2/data_untrusted, working out why /home is missing on
   a DTN, using Mercury CRON or HPSS access, or reaching Mercury through an
   RDHPCS bastion with a CAC/PIV or YubiKey certificate.
-compatibility: Script-authoring skill; no login required. Access requires CAC/PIV or YubiKey authentication through a Mercury bastion and a signed master certificate.
+compatibility: Script-authoring skill; no login required. Access is through the mercury-mfa bastions with CAC/PIV or YubiKey credentials, and is available to all RDHPCS users.
 metadata:
   version: "1.0"
   system: mercury
@@ -1464,22 +1464,22 @@ allowed-tools: Read Write Grep Glob
 
 Body sections with exactly these facts:
 
-1. **`# Mercury — NOAA RDHPCS Data Transfer`** — a transfer and collaboration system, **not a compute system**. It has **no compute nodes**.
-2. **`## System Overview`** table: 4 login nodes; trusted data transfer nodes (DTNs) and untrusted DTNs (uDTNs); dual-socket AMD EPYC Genoa 9654; purpose is secure data movement to and from anywhere for NOAA and outside collaborators.
-3. **`## First Login`** — the first login auto-creates `/home/First.Last`, `/collab2/data/First.Last`, and `/collab2/data_untrusted/First.Last`. `/collab2` is Mercury's HPFS scratch.
+1. **`# Mercury — NOAA RDHPCS Data Transfer`** — "primarily a data transfer/collaboration system that is available to all RDHPCS": a collaborative system where data can be securely copied to and from any location, by any authorized user, to disseminate R&D data to NOAA's collaborators around the globe. **No compute nodes are available on Mercury.** The system comprises interactive login nodes (front ends), a file system, data transfer nodes, and back-end HPSS storage.
+2. **`## System Overview`** table: **4 login nodes**; **dual-socket AMD EPYC Genoa 9654, 2.40 GHz, 96 cores**; trusted Data Transfer Nodes (DTNs) available from trusted (pre-approved) NOAA and non-NOAA sites; Untrusted Data Transfer Nodes (UDTNs) available from anywhere on the internet; back-end HPSS. Login is with CAC or YubiKey credentials through the MFA bastion (`mercury-mfa.princeton.rdhpcs.noaa.gov`, `mercury-mfa.fairmont.rdhpcs.noaa.gov`); the front ends are `mfe[01-04].fairmont.rdhpcs.noaa.gov`.
+3. **`## First Login`** — the directories needed for transfers are created automatically on your **first login to a Mercury front end**: `/home/First.Last`, `/collab2/data/First.Last` (trusted data), `/collab2/data_untrusted/First.Last` (untrusted data). Log in at least once before any sharing or UDTN use.
 4. **`## Where Files Must Go`** — the visibility table, which is the whole point of the skill:
 
-   | Path | Login nodes | Trusted DTNs | Untrusted DTNs | Use |
-   |------|-------------|--------------|----------------|-----|
-   | `/home/First.Last` | Yes | **No** | No | Persistent workspace, small |
-   | `/collab2/data/First.Last` | Yes | Yes | Yes | Staging for external transfers |
-   | `/collab2/data_untrusted/First.Last` | Yes | No | Yes | Staging for untrusted peers |
+   | Path | Front ends | Trusted DTNs | UDTNs | Quota | Purge |
+   |------|-------------|--------------|----------------|-----|-----|
+   | `/home/First.Last` | Yes | **No** | No | 10 GB | not purged, backed up daily |
+   | `/collab2/data/First.Last` | Yes | Yes | Yes | 60 TB | files unaccessed 60 days are purged |
+   | `/collab2/data_untrusted/First.Last` | Yes | No | Yes, as `/collab2/$USER` | 20 TB | files unaccessed 14 days are purged |
 
-   Pick the path by the peer you are transferring with: data visible to an untrusted collaborator goes in `data_untrusted`, and nothing in `/home` is reachable from a DTN at all.
-5. **`## Transferring Data`** — stage into `/collab2/data` or `/collab2/data_untrusted`, then move it with the protocol the remote end supports (scp/sftp/rsync over the bastion, or Globus where the collaborator uses it). Use `tar` for many small files rather than transferring them individually.
-6. **`## CRON and HPSS`** — Mercury provides CRON services for scheduled transfers and HPSS access for archive-side movement.
-7. **`## Common Gotchas`** — trying to run a compute job, there are no compute nodes; assuming `/home` exists on a DTN; putting externally visible data in `/collab2/data` when the peer is untrusted, or vice versa; filling `/collab2` and treating it as archive; single-threaded transfer of huge file counts instead of tarring.
-8. **`## Additional Resources`** — Mercury guide URL plus the RDHPCS connecting page URL.
+   Pick the path by the peer you are transferring with: data visible to an untrusted collaborator goes in `data_untrusted`, and **the `/home` tree is not accessible from the DTNs at all**. On a UDTN the `data_untrusted` tree is *renamed*: `/collab2/data_untrusted/$USER` appears there as `/collab2/$USER`. `/collab2` is a **Lustre** scratch filesystem (per the RDHPCS storage tables), considered scratch, meant for transient data only, and **not backed up**. Access time means the last time a file was opened for reading or writing; RDHPCS warns it will adopt a more aggressive purge (30 or 15 days) if the filesystem nears capacity, so manage data actively.
+5. **`## Transferring Data`** — RDHPCS encourages **Globus Connect Service** over other methods whenever possible; it is available on Mercury, and the Mercury collections are `noaardhpcs#mercury` (trusted) and `noaardhpcs#mercury_untrusted` (anywhere). Globus CLI is available on Mercury with `module load globus-cli`. For a laptop, Globus Connect Personal treats it as a Globus Untrusted Endpoint and transfers suspend/resume with the machine's sleep and reboot; scp/sftp to a DTN uses pre-configured SSH port tunnels. The nodes are `dtn-mercury.fairmont.rdhpcs.noaa.gov` and `udtn-mercury.fairmont.rdhpcs.noaa.gov`. Reaching a fixed external partner may need a firewall access request naming the DTN hostnames/IPs. **Tar many small files into one archive** — transfer performance tracks file-open cost, not bytes, and a few large files beat many small ones.
+6. **`## CRON, HPSS, and Software`** — CRON services are available on Mercury for scheduled work; HPSS is accessible (see the NESCC HPSS page). Mercury carries only a **minimal software stack** for compiling and running programs, since it exists for data movement — open a help ticket for anything more.
+7. **`## Common Gotchas`** — trying to run a compute job, there are no compute nodes; assuming `/home` exists on a DTN; putting externally visible data in `/collab2/data` when the peer is untrusted, or vice versa; expecting `/collab2/data_untrusted` to appear under that name on a UDTN; treating `/collab2` as archive (scratch, not backed up, purged on access time); transferring huge file counts one by one instead of tarring; expecting a full software stack on a transfer node.
+8. **`## Additional Resources`** — Mercury guide URL, the RDHPCS connecting page URL, and the transferring-data page URL.
 
 - [ ] **Step 4: Run test to verify it passes**
 
