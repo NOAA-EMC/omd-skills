@@ -8,23 +8,23 @@ Diagnosing failures quickly is a necessary component of maintaining a suite of p
 To that end, all code must be scrutinized for both stability and ease of troubleshooting and recovery.
 It is not practical to discuss all of the steps that can or should be taken to write operational-quality code, but here are some things that should be considered:
 
-* **Notification of use of backup data**
+* **Notification of use of backup data** [portable]
     For scripts that have a secondary data source to be used when the primary data is not available, the script must include a message that indicates the primary data is not available and backup data is being used.
     If continued use of backup data will result in a degraded product, the developer should work with NCO's SPA team to include code to notify the appropriate parties when primary data is unavailable.
     The `mail.py` utility can be useful in this regard.
-* **Data of opportunity**
+* **Data of opportunity** [portable]
     It is acceptable to use data from a server or other source that is not supported 24/7.
     However, the application cannot fail when this data is missing.
     Appropriate notification must be logged indicating that the job is continuing without this data source (similar to use of backup data above).
-* **Descriptive error messages**
+* **Descriptive error messages** [portable]
     Fatal errors must print a descriptive message beginning with "FATAL ERROR:".
     Warnings or non-fatal error messages must be prefaced with "WARNING:".
     As with executable code, error messages in scripts must be written so that if an issue arises, the context of that error or failure is communicated as early and as clearly as possible.
-* **Appropriate modes of failure**
+* **Appropriate modes of failure** [portable]
     An executable must not terminate abnormally with a segmentation or memory fault for errors that are discoverable/trappable.
     For example, lack of input data must be handled either in the script before the executable runs, or by the executable if checking in the script is not practical.
     All scripts that depend on the existence of a certain type of input or restart data to successfully run must check for the existence of such data before running and report an informative fatal error if the needed data is missing.
-* **Recovery from code failure or abnormal system failure**
+* **Recovery from code failure or abnormal system failure** [portable]
     Restart capability must be applied to an operational job to save time when recovering from a failure.
     Long running jobs that have multiple executable calls might be a good candidate to break into two smaller jobs so that if a failure occurs, only the part with the problem needs to be rerun, thus the time to completion is shorter.
     An example of this would be to submit a separate post-processing job for each forecast hour, so any failure for one forecast hour does not impact others, and can be recovered from quickly.
@@ -33,31 +33,31 @@ It is not practical to discuss all of the steps that can or should be taken to w
     The job scripts must be designed so this restart will happen automatically if the job is rerun.
     Any products delivered by a restarted production job must not be delayed by more than 15 minutes.
     Data assimilation jobs are exempt from this requirement, but steps should be taken to minimize runtimes and enhance re-runnability of these processes.
-* **No background processing**
+* **No background processing** [portable]
     `PBS Pro` loses control of processes when they are put in the background.
     Therefore, background processing must be avoided. Killing a `PBS Pro` job must terminate all processes running under it.
-* **No external-pointing symlinks**
+* **No external-pointing symlinks** [portable]
     Symbolic links to resources outside of the application directory or package (e.g. links to absolute paths) are not allowed within the package.
     When external resources are required, their paths must be obtained from production module variables (when available) or defined as variables in the version file and ecf script and used wherever the external resource is needed.
-* **Working directories**
+* **Working directories** [portable]
     Working directories must contain a unique identifier (job id) unless there is an application need to share the directory across multiple jobs (e.g. a forecast job writing output that is needed by a post job running in parallel).
     Working directories must be removed upon successful completion of the run.
     All data that is needed for longer than one cycle must be copied to `$COMOUT`.
     MPMD child processes must do their work in separate subdirectories of the main working directory to avoid cases where multiple processes might create/modify/remove the same file simultaneously.
-* **Text formatting**
+* **Text formatting** [portable]
     All text files (scripts, source code, config files, etc.), as well as standard output for all jobs/scripts, must only use the basic ASCII character set, with no Windows-format carriage returns, stylized quotation marks, or other non-standard characters.
-* **Documentation Blocks**
+* **Documentation Blocks** [portable]
     Source code and scripts must be annotated with information that may help staff remedy a problem if something goes awry.
     In some cases, too much information is as bad as none at all.
     We ask that you use your best judgment to include information that will be of the most help in troubleshooting potential issues.
     Example 4 shows a suggested format for a documentation block (DOCBLOCK).
-* **Points of contact**
+* **Points of contact** [portable]
     All applications running in production must have a primary and backup support contact reachable 24/7 in case of operational failures.
-* **Cold starts**
+* **Cold starts** [portable]
     All jobs that depend on restart data from previous runs must include a cold restart option.
     Cold start is the ability to run using the current inputs and observations without any data from previous runs.
     The cold start option must be activated by the addition of "`export COLDSTART=YES`" in the job card
-* **Removal of dead code**
+* **Removal of dead code** [portable]
     After initial coding updates/debugging efforts, executable statements that are made inert by commenting must be removed.
     Rely on configuration management software for content differentials.
 
@@ -89,6 +89,12 @@ It is not practical to discuss all of the steps that can or should be taken to w
 * Use appropriate comment indicator (#, !, or //) where appropriate.
 
 ### B. Compiled Code (C or Fortran source)
+
+> **[WCOSS]** The compiler collections, the `module load` build pattern, `FORTn` unit
+> numbers, `prep_step`, and `valgrind4hpc` below are WCOSS production mechanics. The
+> portable principles in this section — compile without warnings, never suppress warnings,
+> fail early, descriptive errors naming the specific missing file, structured control
+> instead of `GO TO` — apply everywhere.
 
 Compiled code must be written in either C/C++ or Fortran.
 C and Fortran compilers must be the latest available version of the Intel or Cray (`cc`, `CC`, and `ftn`) compiler collections.
@@ -143,6 +149,12 @@ Makefiles must only include compilers and libraries using variables defined in m
 
 ### C. Interpreted Code (bash, ksh, perl, or python scripts)
 
+> **[WCOSS]** `$DATA`, `$COMROOT`, `$SENDDBN`/`$SENDDBN_NTC`, `setpdy.sh`, `prep_step` and
+> `err_chk` wrapping, COMROOT cleanup, and "never write to dcom" are WCOSS mechanics. The
+> portable principles — a `#!` shebang, invoke scripts directly rather than via `sh`,
+> debug logging with `PS4='+ $SECONDS +'`, redirect verbose output, use the module's Python
+> rather than the system's, and no false or misleading errors — apply everywhere.
+
 Each "job" is associated with a single `J-job`, located in the `jobs` subdirectory.
 The `J-job` sets up the environment and calls an `ex-script` script located in the `scripts` subdirectory.
 All `J-jobs` must follow the naming convention `JAAAAA`: all capital letters beginning with the letter 'J' with no extension.
@@ -195,3 +207,32 @@ Please also observe the following points:
 * Python "FutureWarning" messages indicate that a specific feature, function, or syntax that is currently being used will be changed or removed in a future version of Python or in a future version of a Python library. Python "FutureWarning" messages are acceptable messages in operations and should not be suppressed. Developers should make an effort to resolve "FutureWarning" messages, when possible, in order to prevent production jobs from failing in the future.
 
 Reference Appendix A: Workflow Examples for commented examples of a version file, ecFlow script, J-job, ex-script, modulefile and makefile.
+
+## Review checklist
+
+Items marked **[portable]** apply on RDHPCS and research code; **[WCOSS]** items apply
+only to operational delivery.
+
+- **[portable]** Fatal errors print `FATAL ERROR:`; warnings print `WARNING:`.
+- **[portable]** Any job over 15 minutes has restart capability, and restarted products are
+  not delayed by more than 15 minutes.
+- **[portable]** No background processing; killing the job terminates all its child processes.
+- **[portable]** No symlinks point outside the package (no absolute-path links).
+- **[portable]** The working directory is removed on success; anything kept past one cycle is
+  copied to `$COMOUT` (**[WCOSS]**) or an equivalent durable output path.
+- **[portable]** Text files and standard output are ASCII-only with no carriage returns.
+- **[portable]** Each source file and script carries a DOCBLOCK header.
+- **[portable]** Dead (commented-out) executable statements are removed before delivery.
+- **[portable]** Code compiles with no errors and no suppressed warnings; the warning level is
+  at least the default.
+- **[portable]** Errors are caught as early as possible and named specifically — "Missing
+  GFS data" is rejected; the message names the missing file and directory.
+- **[portable]** Failures do not propagate past the first point where the problem is detectable.
+- **[portable]** Every production application has a primary and backup contact reachable 24/7.
+- **[portable]** Jobs that depend on restart data offer a cold-start option.
+- **[WCOSS]** Fortran I/O units follow 11-49 input / 51-79 output / 80-94 work, and `prep_step`
+  is called before executables that use `FORTn`.
+- **[WCOSS]** Each `dbn_alert` block is wrapped in a `$SENDDBN`/`$SENDDBN_NTC` check.
+- **[WCOSS]** Each C or Fortran execution is wrapped with `prep_step` and `err_chk`.
+- **[WCOSS]** Nothing is written to dcom unless ingesting data from an outside source.
+- **[WCOSS]** Files containing restricted data carry the appropriate group and permissions.
