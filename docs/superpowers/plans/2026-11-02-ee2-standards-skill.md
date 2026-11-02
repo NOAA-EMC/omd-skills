@@ -118,7 +118,9 @@ separate `omd-standards/` family keeps the two licenses distinct.
    headings before regenerating.
 3. Regenerate into a scratch directory (`--write /tmp/gen`), diff each file
    section-by-section against the committed copy, and carry forward the
-   `[WCOSS]`/`[portable]` tags and per-section checklists.
+   `[WCOSS]`/`[portable]` tags, the per-section checklists, and the one manual
+   formatting fix: `workflow.md`'s "Workflow Diagram::" heading is rewritten as
+   "Workflow Diagram:" with the indented literal block fenced as ```text.
 4. Re-run `python3 tools/run_tests.py`; the traceability test is the guard.
 5. Bump `upstream_version` and `as_of` in `SKILL.md` frontmatter.
 ```
@@ -1202,9 +1204,9 @@ Two directions are checked for every curated probe:
   * file -> upstream: the probe text exists in the reference file, so the vendoring
     actually carried the rule through.
 Bolded bullet rule headings in references/*.md are extracted and checked the same way
-(currently only standards.md section A carries lines in that shape; authored checklists
-use numbered items and are deliberately not scanned, as they are skill prose, not
-vendored rules).
+(currently only standards.md section A carries lines in that shape; the authored review
+checklists are tag-first bullets like "- **[portable]** ..." which never match this
+shape and are deliberately not scanned, as they are skill prose, not vendored rules).
 Residue and fence-balance checks ensure the converter left no raw RST markup behind.
 The upstream Table 7 gap must be documented, never reconstructed. The vendored RST is
 also checked against the digest the extractor pins, so the two cannot drift apart.
@@ -1224,6 +1226,7 @@ from tools.ee2_extract import SECTIONS, UPSTREAM_MD5  # noqa: E402
 
 RST_PATH = ROOT / "tests" / "data" / "ee-standards.rst"
 REF_DIR = ROOT / "skills" / "omd-standards" / "ee2-standards" / "references"
+SKILL_PATH = ROOT / "skills" / "omd-standards" / "ee2-standards" / "SKILL.md"
 
 SMART = {"\u201c": '"', "\u201d": '"', "\u2018": "'", "\u2019": "'", "\u2013": "-", "\u2014": "--"}
 
@@ -1317,6 +1320,7 @@ RESIDUE = [
     r"csv-table",
     r"code-block",
     r"^\^+$",
+    r"::$",
 ]
 
 
@@ -1435,6 +1439,33 @@ class EE2Traceability(unittest.TestCase):
             prose = strip_code_fences(path.read_text(encoding="utf-8"))
             self.assertNotIn("../", prose, f"path escape in {path.name}")
 
+    def test_references_dir_matches_sections(self):
+        # A botched re-sync that deletes a reference AND its SECTIONS entry would
+        # otherwise pass every probe test; the directory and the map must agree.
+        names = {p.name for p in REF_DIR.glob("*.md")}
+        self.assertEqual(names, set(SECTIONS),
+                         "references/ directory and SECTIONS keys have drifted apart")
+
+    def test_skill_routing_and_gate_citations(self):
+        # SKILL.md is the user-facing index; nothing else checks that it points at
+        # real files and that its gate items still cite known references.
+        text = SKILL_PATH.read_text(encoding="utf-8")
+        table = text.split("## Which reference to load")[1].split("## Portability routing")[0]
+        cited = re.findall(r"`(references/[\w.-]+\.md)`", table)
+        self.assertEqual({c.split("/")[-1] for c in cited}, set(SECTIONS),
+                         "routing table must cite exactly the SECTIONS references")
+        for rel in cited:
+            self.assertTrue((SKILL_PATH.parent / rel).is_file(), f"routing path missing: {rel}")
+        gate = text.split("## Review gate")[1].split("## Scope")[0]
+        items = re.findall(r"^\d+\.\s+\*\*.*$", gate, re.M)
+        self.assertEqual(len(items), 20, f"expected 20 gate items, found {len(items)}")
+        for line in items:
+            refs = re.findall(r"([\w-]+\.md)", line)
+            self.assertTrue(refs and all(r in SECTIONS for r in refs),
+                            f"gate item cites unknown reference: {line[:60]!r}")
+        self.assertRegex(text, r'upstream_version:\s*"[^"]+"\s*\n\s*as_of:\s*"[^"]+"',
+                         "SKILL.md frontmatter must pin upstream_version and as_of")
+
 
 if __name__ == "__main__":
     unittest.main()
@@ -1443,7 +1474,7 @@ if __name__ == "__main__":
 - [ ] **Step 3: Run the test to verify it passes**
 
 Run: `python3 -m unittest tests.test_ee2_traceability -v`
-Expected: 11 tests, all PASS. If `test_curated_probes_trace_to_upstream` fails, the probe text was mistyped — correct the probe to match upstream wording, never edit the reference file to match a wrong probe.
+Expected: 13 tests, all PASS. If `test_curated_probes_trace_to_upstream` fails, the probe text was mistyped — correct the probe to match upstream wording, never edit the reference file to match a wrong probe.
 
 These assertions were simulated against the pinned RST and the generated reference files before the plan was written, so a correctly implemented task should pass on the first run: 13 rule headings trace from `standards.md`, 57 probes trace in both directions, no residue patterns match outside fences, all fences balance, and the upstream table set is exactly `{1,2,3,4,5,6,8,9}` with `Table 7` referenced in prose only.
 

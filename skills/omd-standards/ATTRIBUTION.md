@@ -30,6 +30,8 @@ separate `omd-standards/` family keeps the two licenses distinct.
    headings before regenerating.
 3. Regenerate into a scratch directory (`--write /tmp/gen`), diff each file
    section-by-section against the committed copy, and carry forward the
-   `[WCOSS]`/`[portable]` tags and per-section checklists.
+   `[WCOSS]`/`[portable]` tags, the per-section checklists, and the one manual
+   formatting fix: `workflow.md`'s "Workflow Diagram::" heading is rewritten as
+   "Workflow Diagram:" with the indented literal block fenced as ```text.
 4. Re-run `python3 tools/run_tests.py`; the traceability test is the guard.
 5. Bump `upstream_version` and `as_of` in `SKILL.md` frontmatter.
