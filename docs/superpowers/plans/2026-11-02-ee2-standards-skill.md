@@ -1201,7 +1201,10 @@ Two directions are checked for every curated probe:
     was not fabricated;
   * file -> upstream: the probe text exists in the reference file, so the vendoring
     actually carried the rule through.
-Bolded rule headings in references/*.md are extracted and checked the same way.
+Bolded bullet rule headings in references/*.md are extracted and checked the same way
+(currently only standards.md section A carries lines in that shape; authored checklists
+use numbered items and are deliberately not scanned, as they are skill prose, not
+vendored rules).
 Residue and fence-balance checks ensure the converter left no raw RST markup behind.
 The upstream Table 7 gap must be documented, never reconstructed. The vendored RST is
 also checked against the digest the extractor pins, so the two cannot drift apart.
@@ -1346,7 +1349,9 @@ class EE2Traceability(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         if not RST_PATH.is_file():
-            raise unittest.SkipTest("vendored ee-standards.rst is missing")
+            # Fail loudly: a silent skip would let the whole guard vanish from CI
+            # if tests/data/ee-standards.rst were ever deleted or moved.
+            raise FileNotFoundError(f"vendored RST missing: {RST_PATH}")
         cls.rst = RST_PATH.read_text(encoding="utf-8")
         cls.norm_rst = normalize(cls.rst)
 
@@ -1395,14 +1400,14 @@ class EE2Traceability(unittest.TestCase):
     def test_every_section_a_rule_is_tagged(self):
         text = (REF_DIR / "standards.md").read_text(encoding="utf-8")
         section_a = text.split("### B. Compiled Code")[0]
-        untagged = re.findall(r"^\* \*\*[^*]+\*\*$", section_a, re.M)
+        untagged = re.findall(r"^[*-] \*\*[^*]+\*\*$", section_a, re.M)
         self.assertEqual(untagged, [], f"untagged section-A rules: {untagged}")
 
     def test_no_rst_residue_outside_fences(self):
         for path in sorted(REF_DIR.glob("*.md")):
             prose = strip_code_fences(path.read_text(encoding="utf-8"))
             for pattern in RESIDUE:
-                self.assertIsNone(re.search(pattern, prose),
+                self.assertIsNone(re.search(pattern, prose, re.M),
                                   f"RST residue {pattern!r} in {path.name}")
 
     def test_fences_balanced(self):
