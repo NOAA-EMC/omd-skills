@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# unpack.sh — flatten genesis skills up to an agent's skills directory.
+# unpack.sh — flatten catalog skills up to an agent's skills directory.
 #
 # Agent clients commonly discover skills as *direct children* of a configured
 # skills directory (without recursion). This repo keeps skills nested by domain
@@ -12,9 +12,8 @@
 #   ./unpack.sh [DOMAIN ...] [options]
 #
 #   With no DOMAIN args, every domain is unpacked. Pass one or more domain
-#   folder names (e.g. hpc-skills plasma-sim-skills) to narrow the set. The
-#   three flat skills can be selected by name: academy, literature-search, and
-#   multi-agent-systems.
+#   folder names (e.g. hpc-skills) to narrow the set. Single-skill domains can
+#   also be selected by name (e.g. literature-search, git-commit).
 #
 # Options:
 #   --root PATH          Workdir root that holds .claude/skills and/or

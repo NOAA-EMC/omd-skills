@@ -1,7 +1,8 @@
-Genesis Skills
+OMD Skills
 
-Skills curated by ModCon.
-Contact: Matt Baughman <mbaughman@pppl.gov>
+AI-agent skills for ocean modeling and scientific workflows, curated by the
+NOAA Ocean Modeling Division (OMD).
+Contact: Barry Baker <TODO: OMD contact email>
 
 
 ------------------------------------------------------------------------
@@ -17,72 +18,54 @@ LICENSE for that subtree.
 
 Known subtrees with separate licensing at the time of this writing:
 
-  skills/academy/                   Maintained as part of the ModCon Base CAF
-                                    family. This subtree includes an
-                                    Apache-2.0 LICENSE at
-                                    skills/academy/LICENSE, which is
-                                    authoritative for this subtree and its
-                                    descendants. See
-                                    skills/academy/ATTRIBUTION.md.
-
-  skills/amsc-skills/               Contributed by the American Science Cloud
-                                    Intelligent Interfaces Team. The
-                                    amsc-data-movement-api skill declares MIT
-                                    in SKILL.md frontmatter; no other licensing
-                                    information accompanied these skills.
-                                    See skills/amsc-skills/ATTRIBUTION.md.
-
-  skills/basedata-skills/          Sourced from the ModCon Base Data project
-                                    No explicit license was found in the
-                                    upstream repository at the time of
-                                    inclusion. See
-                                    skills/basedata-skills/ATTRIBUTION.md.
-
-  skills/baseeval-skills/           Sourced from the ModCon Base Eval project
-                                    and related development repositories.
-                                    This subtree includes an Apache-2.0
-                                    LICENSE at skills/baseeval-skills/LICENSE,
-                                    which is authoritative for this subtree
-                                    and its descendants. See
-                                    skills/baseeval-skills/README.md.
-
-  skills/hpc-skills/                Maintained as part of the ModCon Base CAF
-                                    family. This subtree includes an
-                                    Apache-2.0 LICENSE at
+  skills/hpc-skills/                NOAA-authored HPC skills for the RDHPCS
+                                    fleet, plus the `pbs` and `slurm` skills
+                                    derived from the upstream ModCon
+                                    hpc-skills subtree. This subtree includes
+                                    an Apache-2.0 LICENSE at
                                     skills/hpc-skills/LICENSE, which is
                                     authoritative for this subtree and its
                                     descendants. See
                                     skills/hpc-skills/ATTRIBUTION.md.
 
-  skills/literature-search/         Maintained as part of the ModCon Base CAF
-                                    family. This subtree includes an
+  skills/literature-search/         Derived from the ModCon Base CAF
+                                    literature-search skill and extended with
+                                    Earth-system-modeling and geoscience
+                                    journal venues. This subtree includes an
                                     Apache-2.0 LICENSE at
                                     skills/literature-search/LICENSE, which is
                                     authoritative for this subtree and its
                                     descendants. See
                                     skills/literature-search/ATTRIBUTION.md.
 
-  skills/multi-agent-systems/       Maintained as part of the ModCon Base CAF
-                                    family. This subtree includes an
-                                    Apache-2.0 LICENSE at
-                                    skills/multi-agent-systems/LICENSE, which is
-                                    authoritative for this subtree and its
-                                    descendants. See
-                                    skills/multi-agent-systems/ATTRIBUTION.md.
+Upstream provenance
 
-  skills/plasma-sim-skills/         Maintained as part of the ModCon Base CAF
-                                    family. This subtree includes an
-                                    Apache-2.0 LICENSE at
-                                    skills/plasma-sim-skills/LICENSE, which is
-                                    authoritative for this subtree and its
-                                    descendants. See
-                                    skills/plasma-sim-skills/ATTRIBUTION.md.
+  `skills/hpc-skills/pbs`, `skills/hpc-skills/slurm`, and
+  `skills/literature-search` are derived from the Genesis Skills collection
+  curated by the DOE/ModCon Base project
+  (https://github.com/AI-ModCon/genesis-skills), which was supported by the
+  U.S. Department of Energy, Office of Science, Office of Advanced Scientific
+  Computing Research. The upstream Apache-2.0 grants are retained in the
+  subtree LICENSE files named above.
 
+  `skills/git-commit` declares MIT in its SKILL.md frontmatter. No other
+  licensing information accompanied the remaining development skills under
+  `skills/`.
 
 This list is informational and may not be exhaustive. Always check for
 a LICENSE file in any subdirectory before assuming the root license
 applies.
 
-This material was prepared as an account of work sponsored by an agency of the United States Government.  Neither the United States Government nor the United States Department of Energy, nor the Contractor, nor any or their employees, nor any jurisdiction or organization that has cooperated in the development of these materials, makes any warranty, express or implied, or assumes any legal liability or responsibility for the accuracy, completeness, or usefulness or any information, apparatus, product, software, or process disclosed, or represents that its use would not infringe privately owned rights.
+This material was prepared as an account of work sponsored by an agency of the
+United States Government. Neither the United States Government nor any agency
+thereof, nor any of their employees, makes any warranty, express or implied, or
+assumes any legal liability or responsibility for the accuracy, completeness,
+or usefulness of any information, apparatus, product, software, or process
+disclosed, or represents that its use would not infringe privately owned rights.
 
-Reference herein to any specific commercial product, process, or service by trade name, trademark, manufacturer, or otherwise does not necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or any agency thereof. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or any agency thereof.
+Reference herein to any specific commercial product, process, or service by
+trade name, trademark, manufacturer, or otherwise does not necessarily
+constitute or imply its endorsement, recommendation, or favoring by the United
+States Government or any agency thereof. The views and opinions of authors
+expressed herein do not necessarily state or reflect those of the United States
+Government or any agency thereof.

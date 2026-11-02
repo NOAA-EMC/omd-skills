@@ -1,13 +1,13 @@
 # Getting Started
 
-Genesis Skills is a collection of reusable Agent Skills for scientific discovery and engineering workflows.
+OMD Skills is a collection of reusable Agent Skills for ocean modeling and scientific workflows.
 There is nothing to compile at the repository root.
 
 ## Clone The Repo
 
 ```bash
-git clone https://github.com/AI-ModCon/genesis-skills.git
-cd genesis-skills
+git clone <TODO: canonical OMD repository URL>
+cd omd-skills
 ```
 
 ## Use The Skills Catalog
@@ -40,5 +40,6 @@ It discovers the catalog from a sibling `skills/` directory by default, or you c
 - Read the root `README.md` for the full project overview.
 - See `CONTRIBUTING.md` for contribution guidelines and issue reporting.
 - See `skill-search/README.md` for details on the catalog helper and its JSON output.
+- See `.github/instructions/` for the VS Code Copilot code-review and Makefile instructions.
 - See `Makefile` for the local lint and test commands (`make lint`, `make test`, and `make test-cov`).
 - See `skill-search/search_example/requirements.txt` if you want to run the demo example.

@@ -15,7 +15,7 @@ Use this helper when an agent needs one of two discovery strategies:
 
 - `my_skills_path`: optional user-managed skills root. Repeat if more than one user root is needed.
 
-The helper resolves the central catalog in this order: the `--central-root` flag, then the `SKILL_SEARCH_CENTRAL_ROOT` environment variable, then a sibling `../skills` directory. To make this skill expose the Genesis catalog, symlink `skill-search/` into your agent's skills dir and (if it isn't beside `skills/`) point one of those at the catalog. The alternative — flattening every skill into a client skills directory for direct discovery — is handled by the repo's `unpack.sh` (`./unpack.sh --help`).
+The helper resolves the central catalog in this order: the `--central-root` flag, then the `SKILL_SEARCH_CENTRAL_ROOT` environment variable, then a sibling `../skills` directory. To make this skill expose the OMD catalog, symlink `skill-search/` into your agent's skills dir and (if it isn't beside `skills/`) point one of those at the catalog. The alternative — flattening every skill into a client skills directory for direct discovery — is handled by the repo's `unpack.sh` (`./unpack.sh --help`).
 
 ## Skill search
 

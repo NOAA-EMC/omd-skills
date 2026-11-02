@@ -43,7 +43,7 @@ def leaves(root: Path) -> list[Path]:
 
 class UnpackTest(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix="genesis unpack ")
+        self.temp = tempfile.TemporaryDirectory(prefix="omd unpack ")
         self.addCleanup(self.temp.cleanup)
         self.base = Path(self.temp.name).resolve()
         self.repo = self.base / "clone with spaces"
@@ -255,7 +255,7 @@ class ActualCatalogTest(unittest.TestCase):
         sources = leaves(REPO / "skills")
         self.assertGreaterEqual(len(sources), 34)
         self.assertEqual(len({source.name for source in sources}), len(sources))
-        with tempfile.TemporaryDirectory(prefix="genesis full catalog ") as tmp:
+        with tempfile.TemporaryDirectory(prefix="omd full catalog ") as tmp:
             for mode in ("copy", "symlink"):
                 with self.subTest(mode=mode):
                     destination = Path(tmp) / mode

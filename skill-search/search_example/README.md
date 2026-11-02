@@ -71,7 +71,7 @@ python run_demo.py --model-endpoint "http://localhost:1234/v1"
 Override the central skills root:
 
 ```bash
-python run_demo.py --central-root /opt/doe/skills
+python run_demo.py --central-root /opt/omd/skills
 ```
 
 Add one or more user-managed roots:

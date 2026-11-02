@@ -46,14 +46,16 @@ def _people_sort_key(name: str) -> tuple[str, str]:
     return (last.casefold(), name.casefold())
 
 
-ROOT_README_EXTRA_CONTRIBUTORS = (
-    "Matt Baughman",
-    "Ian Foster",
-    "Nathan Hodas",
-    "Stefan Wild",
-)
-
-ROOT_README_EXTRA_TEAMS = ("ModCon Base CAF Team",)
+# Recognised ATTRIBUTION.md shapes (documented in CONTRIBUTING.md):
+#   **Team:** <team name>
+#   **Team:** <team name>: <Name (Org)>, <Name (Org)>, ...
+#   **Author:** <Name (Org)>, <Name (Org)>, ...
+#   **Authors:**
+#   - <Name, Org>
+# Put an author's institution in parentheses (or after a comma on a bullet line) so the
+# name can be extracted reliably.
+TEAM_LINE_PREFIX = "**Team:**"
+AUTHOR_LINE_PREFIXES = ("**Author:**", "**Authors:**")
 
 
 def _extract_name(fragment: str) -> str:
@@ -67,9 +69,39 @@ def _names_from_csv_line(text: str) -> list[str]:
     names: list[str] = []
     for chunk in text.split(","):
         name = _extract_name(chunk)
-        if name:
+        if name and not _looks_like_organization(name):
             names.append(name)
     return names
+
+
+# Attribution lines may use either `Name (Org)` or `Name, Institution` (the latter is
+# common in existing ATTRIBUTION.md files). Chunks that read as institutions rather
+# than people are skipped so they never appear in the README contributor list.
+ORGANIZATION_KEYWORDS = (
+    "agency",
+    "center",
+    "centre",
+    "corporation",
+    "consortium",
+    "department",
+    "division",
+    "foundation",
+    "group",
+    "institute",
+    "institution",
+    "laborator",
+    "labs",
+    "office",
+    "program",
+    "school",
+    "team",
+    "university",
+)
+
+
+def _looks_like_organization(name: str) -> bool:
+    lowered = name.casefold()
+    return any(keyword in lowered for keyword in ORGANIZATION_KEYWORDS)
 
 
 def _notice_contact(root: Path) -> str | None:
@@ -82,83 +114,74 @@ def _notice_contact(root: Path) -> str | None:
     return _extract_name(match.group(1))
 
 
-def _basedata_contributors(root: Path) -> tuple[str | None, list[str]]:
-    path = root / "skills" / "basedata-skills" / "ATTRIBUTION.md"
-    if not path.is_file():
-        return None, []
-    team = None
-    names: list[str] = []
-    for line in _read(path).splitlines():
-        if line.startswith("**Team:**"):
-            team = "ModCon Base Data Team"
-            tail = line.split(":", 1)[1]
-            if ":" in tail:
-                tail = tail.split(":", 1)[1]
-            names.extend(_names_from_csv_line(tail))
-    return team, names
+def _attribution_paths(root: Path) -> list[Path]:
+    """Return every ATTRIBUTION.md under skills/, sorted by directory path."""
 
-
-def _amsc_team(root: Path) -> str | None:
-    path = root / "skills" / "amsc-skills" / "ATTRIBUTION.md"
-    if not path.is_file():
-        return None
-    return "American Science Cloud Intelligent Interfaces Team"
-
-
-def _lm_eval_contributors(root: Path) -> list[str]:
-    path = root / "skills" / "baseeval-skills" / "lm-eval-harness-skills" / "ATTRIBUTION.md"
-    if not path.is_file():
+    skills = root / "skills"
+    if not skills.is_dir():
         return []
-    for line in _read(path).splitlines():
-        if line.startswith("**Author:**"):
-            match = re.match(r"\*\*Author:\*\*\s*(.+?)(?:,|$)", line)
-            if match:
-                return [_extract_name(match.group(1))]
-    return []
+    return sorted(
+        (path for path in skills.rglob("ATTRIBUTION.md") if path.is_file()),
+        key=lambda path: str(path.parent).casefold(),
+    )
 
 
-def _perlmutter_ns_contributors(root: Path) -> list[str]:
-    path = root / "skills" / "baseeval-skills" / "perlmutter-ns-skills" / "ATTRIBUTION.md"
-    if not path.is_file():
-        return []
+def _team_from_line(line: str) -> tuple[str | None, list[str]]:
+    """Parse a `**Team:**` line into (team name, contributor names).
+
+    A team line may carry a name list after a second colon, e.g.
+    `**Team:** ModCon Base Data (AI-ModCon): Shreyas Cholia (LBNL), ...`.
+    """
+
+    tail = line[len(TEAM_LINE_PREFIX) :]
     names: list[str] = []
-    in_authors = False
-    for line in _read(path).splitlines():
-        if line.startswith("**Authors:**"):
-            in_authors = True
-            continue
-        if in_authors:
-            if line.startswith("- "):
-                names.append(_extract_name(line[2:].split(",", 1)[0]))
-            elif line.strip():
-                break
-    return names
+    if ":" in tail:
+        team_part, _, people_part = tail.partition(":")
+        team = team_part.strip().strip("*").strip()
+        names.extend(_names_from_csv_line(people_part))
+    else:
+        team = tail.strip().strip("*").strip()
+    team = re.sub(r"\s*[\(<].*$", "", team).strip()
+    return (team or None), names
 
 
-def _baseeval_team(root: Path) -> str | None:
-    path = root / "skills" / "baseeval-skills" / "README.md"
-    if not path.is_file():
-        return None
-    return "ModCon Base Eval Team"
+def build_attribution_contributors(root: Path) -> tuple[set[str], set[str]]:
+    """Scan every `skills/**/ATTRIBUTION.md` for teams and individual authors.
+
+    This replaces the earlier per-family hardcoded readers so that any skill family
+    added to the catalog is credited automatically, including OMD-authored skills.
+    """
+
+    teams: set[str] = set()
+    individuals: set[str] = set()
+
+    for path in _attribution_paths(root):
+        lines = _read(path).splitlines()
+        for index, line in enumerate(lines):
+            if line.startswith(TEAM_LINE_PREFIX):
+                team, names = _team_from_line(line)
+                if team:
+                    teams.add(team)
+                individuals.update(names)
+            elif line.startswith(AUTHOR_LINE_PREFIXES):
+                header = "**Authors:**" if line.startswith("**Authors:**") else "**Author:**"
+                tail = line[len(header) :].strip()
+                if not tail:
+                    # Bullet list of authors follows the header line.
+                    for bullet in lines[index + 1 :]:
+                        if bullet.startswith("- "):
+                            individuals.update(_names_from_csv_line(bullet[2:]))
+                        elif bullet.strip():
+                            break
+                    continue
+                individuals.update(_names_from_csv_line(tail))
+
+    return teams, individuals
 
 
-def _basesafe_contributors(root: Path) -> tuple[str | None, list[str]]:
-    path = root / "skills" / "basesafe-skills" / "readme.md"
-    if not path.is_file():
-        return None, []
-    names: list[str] = []
-    in_table = False
-    for line in _read(path).splitlines():
-        if line.startswith("| Name"):
-            in_table = True
-            continue
-        if in_table:
-            if not line.startswith("|"):
-                break
-            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-            if len(cells) >= 1 and cells[0] and set(cells[0]) != {"-"}:
-                names.append(_extract_name(cells[0]))
-    return "ModCon Base Safe Team", names
+# Root label used in the README repository-structure tree. Keep in sync with the
+# repository slug; it is a constant so the validator and the README agree.
+README_ROOT_LABEL = "omd-skills/"
 
 
 def build_readme_tree_lines(root: Path) -> list[str]:
@@ -166,7 +189,7 @@ def build_readme_tree_lines(root: Path) -> list[str]:
 
     skills = root / "skills"
     lines = [
-        "genesis-skills/",
+        README_ROOT_LABEL,
         "├── unpack.sh                  # flatten skills into an agent's skills dir (Method 1)",
         "├── skill-search/              # the upper-level discovery skill (Method 2)",
         "│   ├── SKILL.md",
@@ -192,37 +215,21 @@ def build_readme_tree_lines(root: Path) -> list[str]:
 
 
 def build_readme_contributor_names(root: Path) -> list[str]:
-    """Return the canonical contributor list for the README."""
+    """Return the canonical contributor list for the README.
+
+    Contributors come from the `NOTICE` contact plus every `skills/**/ATTRIBUTION.md`
+    team and author line, so adding a skill family with an attribution file is enough
+    to have it credited.
+    """
 
     individuals: set[str] = set()
-    teams: set[str] = set()
 
     contact = _notice_contact(root)
     if contact:
         individuals.add(contact)
 
-    amsc_team = _amsc_team(root)
-    if amsc_team:
-        teams.add(amsc_team)
-
-    team, names = _basedata_contributors(root)
-    if team:
-        teams.add(team)
-    individuals.update(names)
-
-    individuals.update(_lm_eval_contributors(root))
-    individuals.update(_perlmutter_ns_contributors(root))
-    individuals.update(ROOT_README_EXTRA_CONTRIBUTORS)
-    teams.update(ROOT_README_EXTRA_TEAMS)
-
-    baseeval_team = _baseeval_team(root)
-    if baseeval_team:
-        teams.add(baseeval_team)
-
-    team, names = _basesafe_contributors(root)
-    if team:
-        teams.add(team)
-    individuals.update(names)
+    teams, authors = build_attribution_contributors(root)
+    individuals.update(authors)
 
     ordered_individuals = sorted(individuals, key=_people_sort_key)
     ordered_teams = sorted(teams, key=str.casefold)

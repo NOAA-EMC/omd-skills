@@ -1,6 +1,6 @@
-# Contributing to Genesis Skills
+# Contributing to OMD Skills
 
-Thank you for your interest in contributing to OMD Skills. This guide covers the [Claude Code skills format](https://code.claude.com/docs/en/skills) as a baseline, plus our conventions for portable multi-client skills. The active [development repository](https://github.com/AI-ModCon/genesis-skills) is hosted on GitHub and is where development, forks, issues, and pull requests occur.
+Thank you for your interest in contributing to OMD Skills. This guide covers the [Claude Code skills format](https://code.claude.com/docs/en/skills) as a baseline, plus our conventions for portable multi-client skills. Clone the repository from the location given in [README.md](README.md#quick-start); that is where development, forks, issues, and pull requests occur.
 
 ---
 
@@ -16,19 +16,16 @@ Thank you for your interest in contributing to OMD Skills. This guide covers the
 
 Skills are organized by domain in the `skills/` directory:
 
-- **Genesis Core (3):** `skills/academy/`, `skills/literature-search/`, and
-  `skills/multi-agent-systems/`
-- **BaseSAFE (6):** `skills/basesafe-skills/` for AI-safety analysis workflows
-- **BaseEval (8):** `skills/baseeval-skills/` for language-model evaluation
-  workflows (lm-evaluation-harness configuration, running NeMo-Skills on
-  Perlmutter, and distilling a run into a model card)
 - **HPC (10):** `skills/hpc-skills/` for Slurm, PBS, and the NOAA RDHPCS systems
   (Hera, Ursa, Orion, Hercules, Gaea, PPAN, Mercury, Cloud)
-- **BaseData (5):** `skills/basedata-skills/` for Croissant, HDMF, data
-  cards, Well conversion, and skill authoring
-- **Plasma Simulation (2):** `skills/plasma-sim-skills/` for GS2 and Gkeyll
-- **AmSC (6):** `skills/amsc-skills/` for data movement, the Python SDK,
-  Globus Compute, the i2 LLM API, the IRI API, and skill discovery
+- **Literature (1):** `skills/literature-search/` for arXiv, PubMed, Semantic
+  Scholar, Google Scholar, and Earth-system-modeling journal searches
+- **Development workflows (8):** top-level skills under `skills/` for Git commits
+  and Git Flow branches, GitHub issues and releases, GitHub Actions efficiency,
+  hardening, and runtime upgrades, and prompt authoring (`git-commit`,
+  `git-flow-branch-creator`, `github-actions-efficiency`,
+  `github-actions-hardening`, `github-actions-runtime-upgrade-conventions`,
+  `github-issues`, `github-release`, `prompt-optimizer`)
 
 Create your skill directory in the appropriate category, or start a new category if needed.
 
@@ -38,11 +35,15 @@ Use this checklist when your PR adds or changes a skill:
 
 1. Create or update the skill subtree under `skills/<domain>/<skill>/`.
 2. Keep the skill instructions in `SKILL.md` and any supporting files in the same subtree.
-3. Add or update the relevant attribution file in that subtree when the skill has authors, upstream sources, or provenance notes.
+3. Add or update `ATTRIBUTION.md` in that subtree when the skill has authors, upstream sources, or
+   provenance notes. Use the line shapes that `tools/repo_inventory.py` reads so the README
+   contributor list stays current: `**Team:** <team>`, `**Team:** <team>: <Name (Org)>, ...`,
+   `**Author:** <Name (Org)>, ...`, or a `**Authors:**` header followed by `- <Name, Org>` bullets.
+   Put the institution in parentheses (or after a comma) so the name parses cleanly.
 4. Put new author names in the attribution source file first, not directly in the root README.
 5. Add a subtree `LICENSE` or `LICENSE.txt` when imported content requires its own license; summarize third-party provenance in `NOTICE`.
 6. Update the root `README.md` repository structure block if the visible tree changed.
-7. If you introduce a new top-level skill family or a new attribution pattern, update `tools/repo_inventory.py` and its tests so the repository-policy check still understands the layout.
+7. If you introduce a new top-level skill family, update `tools/repo_inventory.py` and its tests so the repository-policy check still understands the layout.
 8. Run `make verify-new-skill` before opening the PR. This wraps skill validation, repo policy, tests, and lint in one command.
 
 ### Skill Portability
@@ -57,7 +58,16 @@ When a skill is derived from, mirrors, or is maintained alongside an upstream re
 
 ### Local Hygiene
 
-The repository includes [.pre-commit-config.yaml](.pre-commit-config.yaml) for workflow YAML, `unpack.sh`, and the main Markdown docs. If you have those tools installed locally, run `pre-commit run --all-files` before opening a pull request.
+The repository includes [.pre-commit-config.yaml](.pre-commit-config.yaml) for workflow YAML, `unpack.sh`, the main Markdown docs, and the `.github/instructions/` files. If you have those tools installed locally, run `pre-commit run --all-files` before opening a pull request.
+
+### Agent Customization Files
+
+VS Code Copilot instruction files live in [.github/instructions/](.github/instructions/) and are picked up automatically for matching files:
+
+- [code-review-generic.instructions.md](.github/instructions/code-review-generic.instructions.md) — language-aware review checks for C, C++, Fortran, Python, and Bash, plus testing expectations. Its `applyTo` globs limit it to those file types so it does not load on unrelated requests.
+- [makefile.instructions.md](.github/instructions/makefile.instructions.md) — GNU Make conventions for the root `Makefile` and any skill makefiles.
+
+Add a new sibling file with its own `applyTo` glob rather than growing an existing one.
 
 ---
 
@@ -96,7 +106,7 @@ and CF conventions.
 ## Your Capabilities
 
 - Search ESGF nodes for CMIP5, CMIP6, and E3SM datasets
-- Validate data availability across DOE data nodes (LLNL, ANL, ORNL)
+- Validate data availability across NOAA archives (NCEI, RDHPCS NESCC-HPSS, GFDL noaac-gfdl-climate-model-input)
 - Subset data by variable, time range, and spatial region
 - Provide metadata summaries following CF conventions
 
@@ -104,7 +114,7 @@ and CF conventions.
 
 1. **Clarify requirements**: Confirm variable, model, experiment, and time range
 2. **Search availability**: Query ESGF to find matching datasets
-3. **Select data node**: Prefer DOE nodes when multiple sources exist
+3. **Select data node**: Prefer the archive closest to the compute resource to avoid transfer cost
 4. **Retrieve data**: Download or generate access scripts
 5. **Validate**: Check data integrity and report any quality flags
 
@@ -254,7 +264,7 @@ Provide results as:
 
 | Variable | Model | Experiment | Time Range | Data Node | Size |
 |----------|-------|------------|------------|-----------|------|
-| tas | CESM2 | ssp585 | 2015-2100 | llnl | 2.3 GB |
+| tas | CESM2 | ssp585 | 2015-2100 | ncei | 2.3 GB |
 ```
 
 ### Scientific Rigor
@@ -454,8 +464,8 @@ By participating, you are expected to uphold this code.
 ## Recognition
 
 Contributors are recognized through:
-- Author credits in skill metadata
+- Author credits in skill metadata and in the skill subtree's `ATTRIBUTION.md`
 - Acknowledgment in the [Contributors](README.md#contributors) section of the README and in release notes
-- Invitation to Genesis Mission Platform community events
+- Listing in OMD model-development and HPC user-community channels
 
 We value all contributions, including new skills, improvements, documentation, and feedback.

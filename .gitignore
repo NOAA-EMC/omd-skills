@@ -13,14 +13,13 @@ tokens.json
 login.tmp
 .env
 *env_vars
-.agentic-vulnerabilities-scan/
 
 # Venvs and run output created by skill setup and run steps
 .venv*/
-.perlmutter-nemo-*-runs/
-skills/baseeval-skills/perlmutter-ns-skills/*/runs/
 /results/
-skills/baseeval-skills/lm-eval-harness-skills/*/results/
 
 # Subagent-driven-development scratch (ledger, briefs, reports)
 .superpowers/
+docs/superpowers/
+specs/
+.specify/

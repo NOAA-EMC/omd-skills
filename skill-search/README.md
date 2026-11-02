@@ -2,7 +2,7 @@
 
 `skill-search` is a self-contained, path-based helper for working with a central skills catalog plus optional user-provided skill roots.
 
-It is designed for the DOE-style deployment shape where a helper directory sits next to a centrally maintained `skills/` directory:
+It is designed for the shared-catalog deployment shape where a helper directory sits next to a centrally maintained `skills/` directory:
 
 ```text
 deploy-root/
@@ -49,7 +49,7 @@ With explicit roots:
 
 ```bash
 python scripts/skill_search.py \
-  --central-root /opt/doe/skills \
+  --central-root /opt/omd/skills \
   --my-skills-path ~/my-team-skills \
   --load-all \
   --include-prompt
@@ -65,7 +65,7 @@ With explicit roots:
 
 ```bash
 python scripts/skill_search.py \
-  --central-root /opt/doe/skills \
+  --central-root /opt/omd/skills \
   --my-skills-path ~/my-team-skills \
   --query "validate Croissant metadata for an ML dataset" \
   --top-k 5
@@ -104,7 +104,7 @@ Search mode returns:
 
 ## As A Skill
 
-This directory includes `SKILL.md` so filesystem-based agents can treat it as a skill wrapper and follow the documented workflow there. To expose the Genesis catalog through it, symlink `skill-search/` into your agent's skills dir; to expose each skill directly to a compatible client instead, use the repo's `unpack.sh` (`./unpack.sh --help`).
+This directory includes `SKILL.md` so filesystem-based agents can treat it as a skill wrapper and follow the documented workflow there. To expose the OMD catalog through it, symlink `skill-search/` into your agent's skills dir; to expose each skill directly to a compatible client instead, use the repo's `unpack.sh` (`./unpack.sh --help`).
 
 The importable Python package lives under `skill-search/skill_search/` so the outer directory can keep the validator-friendly hyphenated name.
 

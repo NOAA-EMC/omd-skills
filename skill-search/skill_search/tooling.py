@@ -50,7 +50,7 @@ def resolve_central_root(
     *,
     tool_root: str | Path | None = None,
 ) -> Path:
-    """Resolve the central skills root for local or DOE deployments.
+    """Resolve the central skills root for local or shared-catalog deployments.
 
     Resolution order:
     1. Explicit ``central_root`` parameter

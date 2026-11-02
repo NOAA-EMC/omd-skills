@@ -16,8 +16,8 @@ except ModuleNotFoundError:  # pragma: no cover - script execution path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# These checks mirror the BaseTemplate "Required Elements for ModCon Base Public
-# Repositories" section:
+# These checks mirror the upstream ModCon BaseTemplate "Required Elements for
+# Public Repositories" section, retained as this repository's policy baseline:
 # https://github.com/AI-ModCon/BaseTemplate#required-elements-for-modcon-base-public-repositories
 # We verify the pieces this repo can enforce directly: README acknowledgment,
 # CONTRIBUTING guidance, Code of Conduct, and getting-started documentation.
@@ -28,12 +28,10 @@ REQUIRED_FILES = (
     "README.md",
     "NOTICE",
     "docs/getting_started.md",
-    "skills/amsc-skills/ATTRIBUTION.md",
-    "skills/basedata-skills/ATTRIBUTION.md",
-    "skills/baseeval-skills/LICENSE",
-    "skills/baseeval-skills/README.md",
-    "skills/baseeval-skills/lm-eval-harness-skills/ATTRIBUTION.md",
-    "skills/baseeval-skills/perlmutter-ns-skills/ATTRIBUTION.md",
+    "skills/hpc-skills/ATTRIBUTION.md",
+    "skills/hpc-skills/LICENSE",
+    "skills/literature-search/ATTRIBUTION.md",
+    "skills/literature-search/LICENSE",
 )
 
 CONTENT_CHECKS = (
@@ -42,8 +40,8 @@ CONTENT_CHECKS = (
     ("README.md", "## Acknowledgment"),
     (
         "README.md",
-        "This work was supported by the U.S. Department of Energy (DOE), Office of Science, "
-        "Office of Advanced Scientific Computing Research in alignment with DOE's Genesis Mission.",
+        "This work was supported by the National Oceanic and Atmospheric Administration (NOAA), "
+        "Ocean Modeling Division.",
     ),
     (
         "README.md",
@@ -54,12 +52,8 @@ CONTENT_CHECKS = (
         "[Guidelines for AI/LLM-Assisted Contributions](#guidelines-for-ai-llm-assisted-contributions)",
     ),
     ("CONTRIBUTING.md", "### Guidelines for AI/LLM-Assisted Contributions"),
-    ("NOTICE", "skills/amsc-skills/ATTRIBUTION.md"),
-    ("NOTICE", "skills/basedata-skills/ATTRIBUTION.md"),
-    ("NOTICE", "skills/baseeval-skills/LICENSE"),
-    ("skills/baseeval-skills/README.md", "Apache-2.0"),
-    ("skills/baseeval-skills/README.md", "lm-eval-harness-skills/ATTRIBUTION.md"),
-    ("skills/baseeval-skills/README.md", "perlmutter-ns-skills/ATTRIBUTION.md"),
+    ("NOTICE", "skills/hpc-skills/ATTRIBUTION.md"),
+    ("NOTICE", "skills/literature-search/ATTRIBUTION.md"),
 )
 
 

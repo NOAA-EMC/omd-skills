@@ -1,8 +1,11 @@
-# Genesis Skills
+# OMD Skills
 
 **Portable AI-agent workflows for science and engineering**
 
-Genesis Skills is a collection of reusable [Agent Skills](https://agentskills.io) for scientific discovery and engineering workflows. Part of the [Genesis Mission](https://gitlab.osti.gov/genesis), the catalog can be used with Claude Code, Codex, Cursor, OpenCode, Gemini CLI, and LangChain Deep Agents. Individual skills may still depend on client-specific features or external tools.
+OMD Skills is a collection of reusable [Agent Skills](https://agentskills.io) for ocean modeling and
+broader scientific and engineering workflows, maintained by the NOAA Ocean Modeling Division (OMD).
+The catalog can be used with Claude Code, Codex, Cursor, OpenCode, Gemini CLI, and LangChain Deep
+Agents. Individual skills may still depend on client-specific features or external tools.
 
 Skills encode domain expertise, connect to scientific data sources, and provide reproducible patterns for computational research.
 
@@ -12,12 +15,16 @@ Skills encode domain expertise, connect to scientific data sources, and provide 
 
 Skills are markdown files (`SKILL.md`) with YAML frontmatter that teach an AI agent how to handle domain-specific tasks. Each skill provides:
 
-- **Domain expertise** — Specialized knowledge for literature, HPC, plasma simulation, scientific-data metadata, and AI-system evaluation
+- **Domain expertise** — Specialized knowledge for NOAA RDHPCS HPC systems, scientific literature search, and common repository workflows
 - **Tool access** — Permissions to use specific tools (Bash commands, file operations, web APIs)
 - **Structured workflows** — Step-by-step instructions for complex scientific tasks
 - **Supporting resources** — Scripts, templates, and reference materials the agent can use
 
 Agents can select a skill from a natural-language request. Client-specific menus and explicit invocation shortcuts vary by agent.
+
+> **Code review guidance.** OMD's language-aware review checklist for C, C++, Fortran, Python,
+> and Bash lives in [.github/instructions/code-review-generic.instructions.md](.github/instructions/code-review-generic.instructions.md).
+> VS Code loads it automatically for matching files.
 
 ---
 
@@ -30,14 +37,12 @@ directory. `unpack.sh` flattens that layout. LangChain Deep Agents receive a
 catalog path in code instead of discovering a user-level directory automatically.
 
 ```bash
-git clone https://gitlab.osti.gov/genesis/genesis-skills.git
-cd genesis-skills
+git clone <TODO: canonical OMD repository URL>
+cd omd-skills
 ```
 
-> Mirror repository: The repository `https://gitlab.osti.gov/genesis/genesis-skills.git`
-> is a read-only mirror of the upstream development repository
-> `https://github.com/AI-ModCon/genesis-skills`. Please use GitHub for development,
-> forks, issues, and pull requests.
+> This catalog is derived in part from the DOE/ModCon **Genesis Skills** collection; see
+> [NOTICE](NOTICE) for the upstream provenance of the retained subtrees.
 
 ### Method 1 — Flatten skills into place (`unpack.sh`)
 
@@ -70,8 +75,8 @@ ln -s "$PWD/skill-search" "$SKILLS_DIR/skill-search"
 
 ### Use a Skill
 
-Ask naturally, for example: “Find recent papers on machine-learning interatomic
-potentials” or “Draft a Slurm script for four GPUs.” Your client can select the
+Ask naturally, for example: “Find recent papers on ocean model data assimilation”
+or “Draft a Slurm script for four GPUs on Hera.” Your client can select the
 matching skill from its description. If a newly installed skill is not noticed
 immediately, follow the client's documented refresh behavior.
 
@@ -86,21 +91,22 @@ immediately, follow the client's documented refresh behavior.
 ## Repository Structure
 
 ```
-genesis-skills/
+omd-skills/
 ├── unpack.sh                  # flatten skills into an agent's skills dir (Method 1)
 ├── skill-search/              # the upper-level discovery skill (Method 2)
 │   ├── SKILL.md
 │   └── scripts/skill_search.py
 ├── skills/
-│   ├── academy/SKILL.md
-│   ├── amsc-skills/  # amsc-data-movement-api, amsc-python-client, globus-compute, i2-api, iri-api, skill-explorer (6)
-│   ├── basedata-skills/  # croissant-validator, datacard-generator, hdmf-schema-builder, skill-creator, well-convert (5)
-│   ├── baseeval-skills/  # card-eval-updater, configuration-creator, configuration-implementor, configuration-planner, configuration-tester, data-exploration, perlmutter-nemo-eval, perlmutter-nemo-generate (8)
-│   ├── basesafe-skills/  # agentic-vulnerabilities-scan, ai-fingerprint, battleprint, fingerprinting, uncertainty-quantification, uq-metrics-evaluator (6)
+│   ├── git-commit/SKILL.md
+│   ├── git-flow-branch-creator/SKILL.md
+│   ├── github-actions-efficiency/SKILL.md
+│   ├── github-actions-hardening/SKILL.md
+│   ├── github-actions-runtime-upgrade-conventions/SKILL.md
+│   ├── github-issues/SKILL.md
+│   ├── github-release/SKILL.md
 │   ├── hpc-skills/  # pbs, rdhpcs-cloud, rdhpcs-gaea, rdhpcs-hera, rdhpcs-hercules, rdhpcs-mercury, rdhpcs-orion, rdhpcs-ppan, rdhpcs-ursa, slurm (10)
 │   ├── literature-search/SKILL.md
-│   ├── multi-agent-systems/SKILL.md
-│   └── plasma-sim-skills/  # gkeyll, gs2 (2)
+│   └── prompt-optimizer/SKILL.md
 ├── CONTRIBUTING.md
 ├── LICENSE
 ├── NOTICE                     # third-party licensing and attribution inventory
@@ -114,14 +120,21 @@ Each skill is a directory containing:
 
 ---
 
-## The Genesis Mission
+## About OMD
 
-Genesis is building the next generation of AI-powered tools for science and engineering. Our goals:
+The NOAA Ocean Modeling Division (OMD) develops and sustains operational and research
+ocean, wave, and coupled Earth-system models used by the National Weather Service and the
+global forecasting community. This catalog collects the AI-agent workflows OMD uses day to
+day, with goals that mirror how the division works:
 
-1. **Democratize AI for Science** — Make advanced AI capabilities accessible to researchers regardless of ML expertise
-2. **Accelerate Discovery** — Reduce time from hypothesis to insight through intelligent automation
-3. **Ensure Reproducibility** — Build tools that produce reliable, validated, and reproducible results
-4. **Foster Collaboration** — Create a shared ecosystem where domain experts contribute and benefit from collective capabilities
+1. **Make HPC reproducible** — Capture RDHPCS queue, storage, and job-script practice in
+   skills so runs are repeatable across Hera, Orion, Hercules, Mercury, Gaea, PPAN, and Ursa
+2. **Accelerate model development** — Reduce time from hypothesis to validated forecast
+   change through documented agent workflows
+3. **Ensure reproducibility** — Prefer skills that produce reliable, reviewed, and
+   version-controlled results
+4. **Foster collaboration** — Share a common catalog that each OMD project contributes to
+   rather than re-inventing local agent setup
 
 ---
 
@@ -138,38 +151,17 @@ If you are adding a new skill, use the checklist in [CONTRIBUTING.md](CONTRIBUTI
 
 Individual skills and their directories contain specific attribution details. The catalog-level and skill contributors include the following:
 
-- Matt Baughman
-- Jean Luca Bez
-- Eric Chagnon
-- Jong Choi
-- Shreyas Cholia
-- Robin Cosbey
-- David Florey
+- Barry Baker
 - Ian Foster
-- Steven Goldenberg
-- Nathan Hodas
-- Natalie Isenberg
-- Olivera Kotevska
-- Fernando Llorente
-- Kyle Parfrey
-- Reilly Raab
-- Emily Saldanha
-- Malachi Schram
-- Andrew Tritt
-- Aaron Tuor
-- Rohith Varikoti
-- Stefan Wild
-- American Science Cloud Intelligent Interfaces Team
 - ModCon Base CAF Team
-- ModCon Base Data Team
-- ModCon Base Eval Team
-- ModCon Base Safe Team
+- OMD - Modeling Division
 
 ---
 
 ## License
 This product is licensed under the root [LICENSE](LICENSE) found at the root of
-this repository.
+this repository. OMD-authored content is a work of the United States Government
+and is in the public domain; see the root `LICENSE` for the exact statement.
 Some skills under `skills/` are sourced from third parties. Where a `LICENSE`
 (or `LICENSE.txt`) file is present in a subdirectory, that license governs the
 contents of that subdirectory and supersedes the root license for that subtree.
@@ -178,4 +170,4 @@ details is in [NOTICE](NOTICE); see the attribution file in each identified
 subtree for the licensing information supplied with that content.
 
 ## Acknowledgment
-This work was supported by the U.S. Department of Energy (DOE), Office of Science, Office of Advanced Scientific Computing Research in alignment with DOE's Genesis Mission.
+This work was supported by the National Oceanic and Atmospheric Administration (NOAA), Ocean Modeling Division.

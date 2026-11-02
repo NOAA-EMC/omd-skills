@@ -15,4 +15,4 @@ repos:
         name: markdownlint
         entry: markdownlint --config .markdownlint.json
         language: system
-        files: ^(README\.md|CONTRIBUTING\.md|docs/getting_started\.md)$
+        files: ^(README\.md|CONTRIBUTING\.md|docs/getting_started\.md|\.github/instructions/.*\.md)$

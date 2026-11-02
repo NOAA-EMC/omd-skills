@@ -168,7 +168,7 @@ def invoke_skill_search(
 ) -> dict[str, Any]:
     """Invoke the path-based skill_search script and parse its JSON output.
 
-    This demo uses subprocess invocation to demonstrate the DOE deployment
+    This demo uses subprocess invocation to demonstrate the shared-catalog deployment
     pattern. For agents that can import the skill_search package directly::
 
         from skill_search import search_payload, load_all_payload

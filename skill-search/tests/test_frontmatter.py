@@ -17,7 +17,7 @@ name: "demo-skill"
 description: "Use this when a demo is needed."
 license: LICENSE.txt
 metadata:
-  author: DOE
+  author: NOAA
   version: "1.0"
 ---
 # Demo
@@ -29,7 +29,7 @@ Run the demo.
         self.assertEqual(metadata["name"], "demo-skill")
         self.assertEqual(metadata["description"], "Use this when a demo is needed.")
         self.assertEqual(metadata["license"], "LICENSE.txt")
-        self.assertEqual(metadata["metadata"], {"author": "DOE", "version": "1.0"})
+        self.assertEqual(metadata["metadata"], {"author": "NOAA", "version": "1.0"})
         self.assertIn("# Demo", body)
 
     def test_read_properties_reads_required_fields(self) -> None:
