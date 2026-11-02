@@ -1,5 +1,15 @@
 # Production Utilities
 
+> **[WCOSS]** `prep_step`, `startmsg`, `postmsg`, `err_chk`, `cpreq`, `compath.py`,
+> `mail.py`, and `getsystem` are `prod_util` executables that exist only in the NCO
+> production environment.
+>
+> **[portable]** The principles they encode apply anywhere: copy inputs into a scratch
+> working directory before running, verify that every file copy succeeded, wrap each
+> executable so a nonzero exit becomes a `FATAL ERROR:` and a clean job failure, and log
+> a start time and progress messages to a log file (upstream notes `startmsg`/`postmsg`
+> are no longer required in operations).
+
 ## C. Production Utilities
 
 The utilities listed below must be used to assist in accomplishing certain tasks for all WCOSS models.
@@ -104,3 +114,13 @@ See Appendix A: Workflow Examples for examples of these utilities in use.
 | --- | --- | --- |
 | Dogwood phase 1 | Dogwood | Dogwood-p1 |
 | Cactus phase 1 | Cactus | Cactus-p1 |
+
+## Review checklist
+
+- **[WCOSS]** Call `prep_step` before each executable that reads `FORTn` units, and `err_chk`
+  after each executable to trap a nonzero exit.
+- **[WCOSS]** Use `cpreq` rather than `cp` for file copies so a failed copy is fatal.
+- **[WCOSS]** Use `compath.py` to resolve COM paths and `mail.py` for notifications instead of
+  hardcoding paths or calling `mail` directly.
+- **[portable]** Every external command's exit status is checked; failures are never silently
+  swallowed.

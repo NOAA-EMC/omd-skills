@@ -1,5 +1,10 @@
 # Standard Environment Variables
 
+> **[WCOSS]** These are the NCO standard production environment variables (`$COMROOT`,
+> `$DATA`, `$OPSROOT`, `SENDDBN`, and the rest of Table 1). On RDHPCS or a workstation,
+> adopt the *pattern* — a single documented set of role variables established in the job
+> card — rather than the exact WCOSS values.
+
 ## A. Standard Environment Variables
 
 A standard set of environment variables has been established to simplify the production workflow and improve the troubleshooting process.
@@ -54,3 +59,12 @@ Variables that are not used in a given job need not be defined (keep the `J-job`
 | `MAILTO` | List of email addresses to send email to | job card |
 | `MAILCC` | List of email addresses to cc on email | job card |
 [^bool]: boolean variables are set to "YES" or "NO" (all caps)
+
+## Review checklist
+
+- **[WCOSS]** The standard variable set is used wherever appropriate; variables unused by a
+  job need not be defined (keep the `J-job` clutter-free).
+- **[WCOSS]** Boolean controls (`SENDECF`, `SENDDBN`, `SENDDBN_NTC`, `SENDCOM`, `SENDWEB`,
+  `KEEPDATA`) are set to `YES` or `NO` in all caps.
+- **[WCOSS]** Job-card-set variables (`envir`, `PACKAGEROOT`, `OPSROOT`, `job`, `jobid`,
+  `DBNROOT`) come from the ecFlow-generated card, not from the scripts.

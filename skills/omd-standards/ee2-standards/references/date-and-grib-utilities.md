@@ -1,5 +1,10 @@
 # Date and GRIB Utilities
 
+> **[WCOSS]** `finddate.sh`, `ndate`, and `setpdy.sh` come from the `prod_util` module; the
+> GRIB tools come from `grib_util` and `wgrib2`. These are NCO production utilities. The
+> portable principle: never compute date arithmetic or parse GRIB inline — call the
+> documented utility so behavior is identical across jobs and correct at year boundaries.
+
 ## D. Date Utilities
 
 The following utilities are used to manage dates in the production suite.
@@ -143,3 +148,10 @@ The module must be loaded in the job cards of jobs using GRIB utilities:
 module load grib_util/$grib_util_ver
 module load wgrib2/$wgrib2_ver
 ```
+
+## Review checklist
+
+- **[WCOSS]** Use `finddate.sh`, `ndate`, and `setpdy.sh` for date arithmetic; do not hand-roll
+  date math that breaks when crossing into a new year.
+- **[WCOSS]** Use `wgrib2` (or the approved GRIB utility) for GRIB inspection and subsetting
+  rather than ad-hoc parsing.

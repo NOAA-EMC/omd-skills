@@ -1,5 +1,9 @@
 # Code Delivery and Vertical Structure
 
+> **[WCOSS]** The branch and tag naming (`release/vX.Y`, `bugfix/…`, `hotfix/…`,
+> `vX.Y-rc<#>`), the Lmod modulefiles, and the sorc/exec/parm/fix/ush/jobs vertical
+> structure are the NCO delivery contract reviewed at hand-off.
+
 ## Code Delivery and Vertical Structure
 
 ### A. Code Delivery
@@ -128,6 +132,10 @@ World Meteorological Organization (WMO) headed output products are placed in a m
 Model output products in GEMPAK format (grids, model vertical profiles) are placed in the model's com structure under a `gempak` subdirectory.
 Table 5 (below), Table 7, Table 8, and Table 9 (in Appendix B: Variables and Directory Structure Tables) show the structures of com, and dcom directories, respectively.
 
+> **Upstream note:** the source prose ("Table 5 (below), Table 7, Table 8, and Table 9…")
+> references a **Table 7** that the upstream document never defines. Tables 1–6, 8, and 9 are
+> present; Table 7 is a gap in the source, preserved here rather than reconstructed.
+
 **Table 5: Structure of COM directories**
 
 | `/lfs/h1/ops/` subdirectory | Description |
@@ -164,3 +172,17 @@ Please mark all items that have been resolved with "NCO Status: Review Required"
 NCO will be transitioning from Bugzilla to issue tracking on remote hosting services (e.g., GitHub).
 
 Please continue to mark all Bugzillas that have been resolved as such and explain the resolution, including relevant files modified to address the Bugzilla.
+
+## Review checklist
+
+- **[WCOSS]** Releases use `release/vX.Y`; bug fixes use `bugfix/<short_description>`;
+  emergency fixes use `hotfix/<short_description>`; production tags use `vX.Y.Z` and
+  release-candidate tags use `vX.Y-rc<#>`, with release-candidate numbering starting at 0.
+- **[WCOSS]** Every delivery ships a build script and, optionally, a modulefile that pin the
+  compiler and library versions; the modulefile and makefile must not reference unused
+  software or libraries.
+- **[WCOSS]** All modulefiles are Lmod/Lua format, and a modulefile must not create symbolic
+  links to external resources (e.g. to absolute paths).
+- **[WCOSS]** The package follows the vertical structure (sorc/exec/parm/fix/ush/jobs per
+  Table 3), and no pre-built executables or libraries are delivered to IDSB — the SPA builds
+  all code before production.

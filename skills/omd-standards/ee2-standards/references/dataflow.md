@@ -1,5 +1,10 @@
 # Dataflow
 
+> **[WCOSS]** DBNet (`dbn_alert`, `$DBNROOT`, `$SENDDBN`) is the WCOSS dissemination
+> mechanism and has no RDHPCS or research equivalent. Do not block a research script for
+> missing DBNet calls; the portable idea is to signal product availability to downstream
+> consumers explicitly.
+
 ## Dataflow
 
 Distributed Brokered Networking (DBNet) is used to disseminate products operationally from WCOSS.
@@ -22,3 +27,12 @@ $DBNROOT/bin/dbn_alert MODEL PMB_GB2 $job $COMOUT/$outputfile
 | Subtype [ `PMB_GB2` ] | Specific data type under the generic type |
 | Job Name [ `$job` ] | Name of the process that alerted the file, this is only used in the log output. It can be helpful when trying to identify the job that called `dbn_alert` |
 | File [ `$COMOUT/$outputfile` ] | File to be alerted; must include the full path. |
+
+## Review checklist
+
+- **[WCOSS]** Every `dbn_alert` is wrapped in a check that `$SENDDBN` (or `$SENDDBN_NTC` for
+  WMO-header products) is set to `YES`.
+- **[WCOSS]** The alert names the model type, subtype, job, and full file path, for example
+  `$DBNROOT/bin/dbn_alert MODEL PMB_GB2 $job $COMOUT/$outputfile`.
+- **[WCOSS]** The NCO Dataflow Team maintains DBNet; coordinate any new or changed alert
+  with them so products keep flowing to all external customers.

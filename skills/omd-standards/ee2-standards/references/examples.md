@@ -1,5 +1,10 @@
 # Workflow Examples and Tables
 
+> **[WCOSS]** These are worked examples for job `jpmb_forecast` on WCOSS (version file,
+> ecFlow job card, `prod_envir` module, `J-job`, `ex-script`, build readme and script,
+> modulefile, makefile) plus the Appendix B directory tables. Read them as templates for the
+> shape of a compliant deliverable, not as values to copy verbatim onto another system.
+
 ## Appendix A: Workflow Examples
 
 All examples are for job `jpmb_forecast`.
@@ -383,3 +388,14 @@ clean:
 | `$DCOMROOT/YYYYMM` | Incoming data for one month (select types only) |
 | `$DCOMROOT/YYYYMMDD/bTTT/xxSSS` | BUFR data tanks |
 *TTT* and *SSS* correspond to the 3-digit BUFR data category type and sub-type, respectively
+
+## Review checklist
+
+- **[WCOSS]** The version file records the package version, and each example names the model
+  (`nco`) and run type (`pmb`) so it is traceable.
+- **[WCOSS]** The job card sets PBS directives and exports the environment, then calls the
+  `J-job`; the `J-job` sets location and temporal variables and calls the `ex-script`.
+- **[WCOSS]** The `ex-script` stages inputs into `$DATA`, calls executables wrapped with
+  `prep_step` and `err_chk`, and copies durable output to `$COMOUT`.
+- **[WCOSS]** The makefile compiles using module-provided variables (`${G2_LIB4}`,
+  `${W3NCO_LIB4}`, `${BACIO_LIB4}`, …) rather than hardcoded paths.

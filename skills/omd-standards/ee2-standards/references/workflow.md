@@ -1,5 +1,10 @@
 # Workflow
 
+> **[WCOSS]** ecFlow, PBS Pro, `qsub`, job cards, and the `J-job` → `ex-script` → `ush`
+> chain are the WCOSS production workflow. The portable principle: keep every
+> environment-dependent setting in the job card or `J-job` — one place per variable — so
+> moving from development to production changes only those exports.
+
 ## Workflow
 
 In the production environment, all jobs are scheduled and submitted to the WCOSS resource manager, PBS Pro, by ecFlow.
@@ -15,11 +20,21 @@ All variables relating to the environment in which a job will run must be set, d
 To move a model from development to production, it must only be necessary to change the variables exported in the job cards.
 Downstream scripts must always use the variables established in the `J-job` and must never alter them.
 
-Workflow Diagram::
+Workflow Diagram:
 
-  job card
-    -> J-job
-        -> ex-script
-            -> ush
-                -> utility script(s)
-                -> compiled executable(s)
+```text
+job card
+  -> J-job
+      -> ex-script
+          -> ush
+              -> utility script(s)
+              -> compiled executable(s)
+```
+
+## Review checklist
+
+- **[WCOSS]** All jobs are scheduled by ecFlow and submitted to PBS Pro via `qsub`.
+- **[WCOSS]** The job card sets PBS directives and the execution environment, then calls the
+  `J-job`; downstream scripts use the `J-job`'s variables and never alter them.
+- **[WCOSS]** Moving a model from development to production changes only the variables
+  exported in the job cards.
