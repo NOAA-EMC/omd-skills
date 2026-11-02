@@ -21,6 +21,8 @@ Every task below implicitly includes this section.
 - `allowed-tools` on `ee2-standards` is exactly `Read Grep Glob`. This skill reads and reviews; it does not submit jobs or fetch at runtime.
 - **No MCP dependency at runtime.** `SKILL.md` and every reference file must contain no `omd` tool calls or instructions to call one. `omd` is a maintenance source for re-syncing only (spec §9).
 - **No invented rules.** Every rule string vendored into `references/` must be traceable to the fetched `standards.rst`. Task 7 is the automated guard.
+- **Heading levels present upstream are `=`, `-`, and `^`** (the `^` level appears twice, both in the Code Delivery section: "i. Issue Tracking on Remote Hosting Services" and "ii. Bugzillas"). `tools/ee2_extract.py` maps all three (`HEADING_LEVELS` includes `"^": "####"`, and the setext regex accepts `[=\-~^]`), and every residue check includes `r"^\^+$"` so an unmapped heading character can never ship as a literal `^^^^` underline again. This is why `code-delivery.md` is 166 generated lines, not the 168 a `^`-blind converter emits.
+
 - **Preserve upstream defects verbatim; do not silently correct them.** Specifically: the prose reference to "Table 7" in the Code Delivery section (upstream RST line 836) has no matching table definition (upstream defines Tables 1–6, 8, 9 only); the typos `procure code deliveres` (RST 729) and `intendend` (RST 16) stay as written. Document the Table 7 gap in `code-delivery.md` rather than inventing a table.
 - **Source of fact is pinned.** The upstream `standards.rst` is ee-docs **11.0.0**, 1319 lines, md5 `699ca1c4ecb6e6ef6c4fbc4cd3112592`, canonical repo `NCO-HPC/nws-hpc-standards`. Fetch from `https://raw.githubusercontent.com/NCO-HPC/nws-hpc-standards/develop/docs/standards.rst`.
 - Vendored files are a U.S. Government work, **not** Apache-2.0. The new family gets its own `skills/omd-standards/ATTRIBUTION.md` and must **not** fall under `skills/hpc-skills/LICENSE`.
@@ -43,7 +45,7 @@ Every task below implicitly includes this section.
 | `date-and-grib-utilities.md` | 298–450 | 145 | [WCOSS] |
 | `standards.md` | 451–654 | 197 | mixed, per rule — **the core** |
 | `dataflow.md` | 655–684 | 24 | [WCOSS] |
-| `code-delivery.md` | 685–893 | 168 | [WCOSS] |
+| `code-delivery.md` | 685–893 | 166 | [WCOSS] |
 | `examples.md` | 894–1319 | 385 | [WCOSS] |
 
 ---
@@ -242,7 +244,7 @@ def _indent_of(line: str) -> int:
     return len(line) - len(line.lstrip()) if line.strip() else 0
 
 
-HEADING_LEVELS = {"=": "##", "-": "###", "~": "####"}
+HEADING_LEVELS = {"=": "##", "-": "###", "~": "####", "^": "####"}
 
 
 def demote_headings(text: str) -> str:
@@ -268,7 +270,7 @@ def demote_headings(text: str) -> str:
             not in_fence
             and line.strip()
             and not line.startswith((" ", "\t"))
-            and re.fullmatch(r"([=\-~])\1{2,}", marker)
+            and re.fullmatch(r"([=\-~^])\1{2,}", marker)
         ):
             out.append(f"{HEADING_LEVELS[marker[0]]} {line.strip()}")
             i += 2
@@ -485,7 +487,7 @@ Expected: md5 `699ca1c4ecb6e6ef6c4fbc4cd3112592` and `1319` lines. If the md5 di
 python3 tools/ee2_extract.py /tmp/ee-standards.rst --write skills/omd-standards/ee2-standards/references
 ```
 
-Expected: nine `wrote .../references/<file> (N lines)` lines with N matching the "Generated lines" column of the Global Constraints table — workflow 25, environment-variables 56, file-naming 49, production-utilities 106, date-and-grib-utilities 145, standards 197, dataflow 24, code-delivery 168, examples 385 — and no `WARNING: ... md5` line.
+Expected: nine `wrote .../references/<file> (N lines)` lines with N matching the "Generated lines" column of the Global Constraints table — workflow 25, environment-variables 56, file-naming 49, production-utilities 106, date-and-grib-utilities 145, standards 197, dataflow 24, code-delivery 166, examples 385 — and no `WARNING: ... md5` line.
 
 - [ ] **Step 5: Remove the placeholder**
 
@@ -509,7 +511,7 @@ import pathlib
 import re
 
 RES = [r"``", r"\[#", r":ref:", r"^\.\. _", r"[\u201c\u201d\u2018\u2019]", r"`_",
-       r"\.\. note::", r"csv-table", r"code-block"]
+       r"\.\. note::", r"csv-table", r"code-block", r"^\^+$"]
 bad = 0
 for path in sorted(pathlib.Path("skills/omd-standards/ee2-standards/references").glob("*.md")):
     inf = False
@@ -1011,7 +1013,7 @@ import pathlib
 import re
 
 RES = [r"``", r"\[#", r":ref:", r"^\.\. _", r"[\u201c\u201d\u2018\u2019]", r"`_",
-       r"\.\. note::", r"csv-table", r"code-block"]
+       r"\.\. note::", r"csv-table", r"code-block", r"^\^+$"]
 bad = 0
 for path in sorted(pathlib.Path("skills/omd-standards/ee2-standards/references").glob("*.md")):
     inf = False
@@ -1307,6 +1309,7 @@ RESIDUE = [
     r"\.\. note::",
     r"csv-table",
     r"code-block",
+    r"^\^+$",
 ]
 
 
