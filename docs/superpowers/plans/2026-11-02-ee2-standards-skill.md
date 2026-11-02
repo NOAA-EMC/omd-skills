@@ -786,8 +786,8 @@ Insert this banner between the `# Workflow` H1 and the `## Workflow` heading:
 ```markdown
 > **[WCOSS]** ecFlow, PBS Pro, `qsub`, job cards, and the `J-job` → `ex-script` → `ush`
 > chain are the WCOSS production workflow. The portable principle: keep every
-> environment-dependent setting in one place (the job card) so moving from development to
-> production changes only those exports.
+> environment-dependent setting in the job card or `J-job` — one place per variable — so
+> moving from development to production changes only those exports.
 ```
 
 Then replace the trailing literal block. Find:
@@ -870,7 +870,8 @@ Insert after the `# Production Utilities` H1:
 > **[portable]** The principles they encode apply anywhere: copy inputs into a scratch
 > working directory before running, verify that every file copy succeeded, wrap each
 > executable so a nonzero exit becomes a `FATAL ERROR:` and a clean job failure, and log
-> start and end messages carrying the job and cycle identity.
+> a start time and progress messages to a log file (upstream notes `startmsg`/`postmsg`
+> are no longer required in operations).
 ```
 
 Append:
@@ -893,10 +894,10 @@ Append:
 Insert after the `# Date and GRIB Utilities` H1:
 
 ```markdown
-> **[WCOSS]** `finddate.sh`, `ndate`, `setpdy.sh`, and the `w3nco`/`wgrib2` utilities are NCO
-> production tools. The portable principle: never compute date arithmetic or parse GRIB
-> inline — call the documented utility so behavior is identical across jobs and correct at
-> year boundaries.
+> **[WCOSS]** `finddate.sh`, `ndate`, and `setpdy.sh` come from the `prod_util` module; the
+> GRIB tools come from `grib_util` and `wgrib2`. These are NCO production utilities. The
+> portable principle: never compute date arithmetic or parse GRIB inline — call the
+> documented utility so behavior is identical across jobs and correct at year boundaries.
 ```
 
 Append:
@@ -932,7 +933,8 @@ Append:
   WMO-header products) is set to `YES`.
 - **[WCOSS]** The alert names the model type, subtype, job, and full file path, for example
   `$DBNROOT/bin/dbn_alert MODEL PMB_GB2 $job $COMOUT/$outputfile`.
-- **[WCOSS]** The NCO Dataflow Team maintains DBNet; do not assume table or key relationships.
+- **[WCOSS]** The NCO Dataflow Team maintains DBNet; coordinate any new or changed alert
+  with them so products keep flowing to all external customers.
 ```
 
 - [ ] **Step 6: `code-delivery.md` — banner, Table 7 note, checklist**
@@ -960,15 +962,16 @@ Append:
 ## Review checklist
 
 - **[WCOSS]** Releases use `release/vX.Y`; bug fixes use `bugfix/<short_description>`;
-  emergency fixes use `hotfix/<short_description>`; tags use `vX.Y` and `vX.Y-rc<#>`, with
-  release-candidate numbering starting at 0.
-- **[WCOSS]** Builds are module-driven (`module load cpe-cray`, `intel/$intel_ver`,
-  `w3nco/$w3nco_ver`); no absolute paths to executables or libraries appear in source or
-  makefiles.
-- **[WCOSS]** All modulefiles are Lmod/Lua format, and hidden modules are not used in
-  production.
-- **[WCOSS]** The package follows the vertical structure (sorc/exec/parm/fix/ush/jobs), and
-  developer work areas and benchmarking tools are removed before submitting to IDSB.
+  emergency fixes use `hotfix/<short_description>`; production tags use `vX.Y.Z` and
+  release-candidate tags use `vX.Y-rc<#>`, with release-candidate numbering starting at 0.
+- **[WCOSS]** Every delivery ships a build script and, optionally, a modulefile that pin the
+  compiler and library versions; the modulefile and makefile must not reference unused
+  software or libraries.
+- **[WCOSS]** All modulefiles are Lmod/Lua format, and a modulefile must not create symbolic
+  links to external resources (e.g. to absolute paths).
+- **[WCOSS]** The package follows the vertical structure (sorc/exec/parm/fix/ush/jobs per
+  Table 3), and no pre-built executables or libraries are delivered to IDSB — the SPA builds
+  all code before production.
 ```
 
 - [ ] **Step 7: `examples.md` — banner and checklist**
@@ -976,10 +979,10 @@ Append:
 Insert after the `# Workflow Examples and Tables` H1:
 
 ```markdown
-> **[WCOSS]** These are worked examples for job `jpmb_forecast` on WCOSS (job card,
-> `prod_envir` module, `J-job`, `ex-script`, `ush`, modulefile, makefile, version file,
-> ecFlow script) plus the Appendix B directory tables. Read them as templates for the shape
-> of a compliant deliverable, not as values to copy verbatim onto another system.
+> **[WCOSS]** These are worked examples for job `jpmb_forecast` on WCOSS (version file,
+> ecFlow job card, `prod_envir` module, `J-job`, `ex-script`, build readme and script,
+> modulefile, makefile) plus the Appendix B directory tables. Read them as templates for the
+> shape of a compliant deliverable, not as values to copy verbatim onto another system.
 ```
 
 Append:
@@ -994,8 +997,8 @@ Append:
   `J-job`; the `J-job` sets location and temporal variables and calls the `ex-script`.
 - **[WCOSS]** The `ex-script` stages inputs into `$DATA`, calls executables wrapped with
   `prep_step` and `err_chk`, and copies durable output to `$COMOUT`.
-- **[WCOSS]** The makefile compiles using module-provided variables (`$(NETCDF)`,
-  `$(W3NCO_LIB4)`, …) rather than hardcoded paths.
+- **[WCOSS]** The makefile compiles using module-provided variables (`${G2_LIB4}`,
+  `${W3NCO_LIB4}`, `${BACIO_LIB4}`, …) rather than hardcoded paths.
 ```
 
 - [ ] **Step 8: Re-validate markdown hygiene on all nine files**
@@ -1116,12 +1119,12 @@ per-file checklists, and every item cites the reference it comes from.
 11. **Suppressed warnings** — compiler warnings silenced or the `-W` level lowered. (`standards.md`)
 12. **Unwrapped `dbn_alert`** — not guarded by a `$SENDDBN`/`$SENDDBN_NTC` check. (`dataflow.md`)
 13. **Missing `prep_step`** — no `prep_step` before an executable using `FORTn` units. (`production-utilities.md`)
-14. **Absolute paths** — hardcoded paths to executables, libraries, or products in source, makefiles, or scripts. (`code-delivery.md`)
-15. **Hidden modules** — a build uses a hidden module or a library not in `module avail`. (`code-delivery.md`)
+14. **Absolute paths** — hardcoded paths to executables, libraries, or products in source, makefiles, or scripts. (`standards.md`)
+15. **Hidden modules** — a build uses a hidden module or a library not in `module avail`. (`standards.md`)
 16. **`$job`/`$envir`/`$model_ver` in file names** — output names not stable across environments. (`file-naming.md`)
 17. **Inline date math** — date arithmetic not using `finddate.sh`, `ndate`, or `setpdy.sh`. (`date-and-grib-utilities.md`)
 18. **No shebang or indirect invoke** — a script lacks `#!`, or is run as `sh script` instead of directly. (`standards.md`)
-19. **Dev work areas present** — benchmarking tools or developer paths remain before IDSB submission. (`code-delivery.md`)
+19. **Dev work areas present** — benchmarking tools or developer paths remain before IDSB submission. (`standards.md`)
 20. **Wrong delivery branch or tag name** — not `release/vX.Y`, `bugfix/…`, `hotfix/…`, or `vX.Y-rc<#>` starting at 0. (`code-delivery.md`)
 
 ## Scope
