@@ -741,8 +741,9 @@ Add at the very end of `file-naming.md`:
   consistent across environments and application versions.
 - **[portable]** ASCII inventory files end in `.grib2.idx`; binary index files end in
   `.bin.idx`.
-- **[WCOSS]** `com` output follows the model/cycle/forecast-hour/domain/format pattern for
-  its model class (non-ensemble, ensemble, coupled, hurricane, space weather).
+- **[WCOSS]** `com` output follows the `tHHz`/`f###` cycle-and-forecast-hour pattern for its
+  model class, except space weather, which uses `model.var_info.valid_time.domain.format`.
+- **[WCOSS]** `wmo` sub-directory files follow `format.model.tHHz.awp_var_info.f###.domain`.
 ```
 
 - [ ] **Step 5: Re-validate markdown hygiene**
