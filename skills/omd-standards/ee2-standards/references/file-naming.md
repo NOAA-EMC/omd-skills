@@ -2,6 +2,10 @@
 
 ## B. File Name Conventions
 
+> **[portable]** The character, separator, prefix, padding, and consistency rules below
+> apply to any model output file name. Only the `com` and `wmo` directory-format blocks are
+> **[WCOSS]** output-structure specifics.
+
 Standard file naming conventions must also be used.
 File names must not contain special characters, uppercase characters or the date (the directory in which the file resides will contain the date).
 File names must indicate the name of the model run, the cycle, the type of data the file contains, the resolution of the data (if applicable), other data related elements, the three-digit forecast hour the data represents (if applicable), and the file type.
@@ -24,7 +28,7 @@ Please adhere to the following:
 * For coupled models in particular:
     * Output directory structure should have subdirectories for each model component Ex. `gefs.YYYYMMDD/HH/atmos/`
 
-Filename format for files in `com`:
+Filename format for files in `com` (**[WCOSS]**):
 
 * non-ensemble: atmospheric, hydro models: `model.tHHz.var_info.f###.domain.format`
 * ensemble: atmospheric, hydro models: `model.tHHz.ens_mem.var_info.f###.domain.format`
@@ -40,10 +44,27 @@ Example filenames for files in `com` ( `HH` is the cycle/hour):
 * `sref.tHHz.pgrb216.p10_3hrly.grib2.idx` → `sref.tHHz.p10.pres_3hrly.216.grib2.idx`
 * `gefs.chem.tHHz.a2d_0p25.f###.grib2` → `gefs.chem.tHHz.a2d.0p25.f###.grib2`
 
-Filename format for files in the `wmo` sub-directory: `format.model.tHHz.awp_var_info.f###.domain`
+Filename format for files in the `wmo` sub-directory (**[WCOSS]**): `format.model.tHHz.awp_var_info.f###.domain`
 
 Example filenames for files in the wmo sub-directory:
 
 * `grib2.aqm.tHHz.08hr_o3.227`
 * `grib2.akrtma.tHHz.2dvaranl.198`
 * `grib2.sref.tHHz.spread.212`
+
+## Review checklist
+
+- **[portable]** No special characters, uppercase characters, or dates in file names — the
+  containing directory carries the date.
+- **[portable]** Periods separate categories; underscores separate words within a category.
+- **[portable]** Grid resolutions below 1 use a leading 0, and a "point" is written `p`
+  (0.25 becomes `0p25`).
+- **[portable]** Forecast hours carry an `f` prefix and are zero-padded so every file in a
+  set has the same number of digits.
+- **[portable]** File names do not embed `$job`, `$envir`, or `$model_ver` — names must be
+  consistent across environments and application versions.
+- **[portable]** ASCII inventory files end in `.grib2.idx`; binary index files end in
+  `.bin.idx`.
+- **[WCOSS]** `com` output follows the `tHHz`/`f###` cycle-and-forecast-hour pattern for its
+  model class, except space weather, which uses `model.var_info.valid_time.domain.format`.
+- **[WCOSS]** `wmo` sub-directory files follow `format.model.tHHz.awp_var_info.f###.domain`.
