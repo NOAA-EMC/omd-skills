@@ -1144,7 +1144,7 @@ print("lines:", len(text.splitlines()), "chars:", len(text))
 SIZE
 ```
 
-Expected: `lines: 83` and `chars: 5230` (the frontmatter is 19 lines / ~850 characters and the body is 64 lines / ~4380 characters). Both are far inside the validator's 500-line and 20,000-character body limits, so no `claude-code-body-500-lines` or `claude-code-body-compaction-budget` warning is raised.
+Expected: `lines: 83` and `chars: 5218` (the frontmatter is 19 lines / ~850 characters and the body is 64 lines / ~4368 characters). Both are far inside the validator's 500-line and 20,000-character body limits, so no `claude-code-body-500-lines` or `claude-code-body-compaction-budget` warning is raised.
 
 - [ ] **Step 3: Validate the skill**
 
