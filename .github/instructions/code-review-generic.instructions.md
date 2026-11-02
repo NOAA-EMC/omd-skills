@@ -1179,6 +1179,19 @@ write(handle)
 ```
 ````
 
+## Operational Compliance (NCO EE2)
+
+When the target is WCOSS or an NCO delivery, apply the NCO Environmental Equivalence
+(EE2) standards through the `ee2-standards` skill and its per-file review checklists.
+
+- **EE2 overrides style preferences.** Where a formatting or structural choice conflicts
+  with an EE2 rule — message prefixes, restart, cleanup, module-driven builds, branch
+  naming — EE2 wins for operational code.
+- **Scope the advice.** EE2 rules tagged **[WCOSS]** (`$COMOUT`, `prep_step`, PBS
+  directives, `dbn_alert`) do not apply to RDHPCS, workstation, or research-only code.
+  Applying them there produces actively wrong advice. Review those targets against the
+  **[portable]** subset only, and say so.
+
 ## Review Checklist
 
 When performing a code review, systematically verify:

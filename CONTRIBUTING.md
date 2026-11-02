@@ -20,6 +20,8 @@ Skills are organized by domain in the `skills/` directory:
   (Hera, Ursa, Orion, Hercules, Gaea, PPAN, Mercury, Cloud)
 - **Literature (1):** `skills/literature-search/` for arXiv, PubMed, Semantic
   Scholar, Google Scholar, and Earth-system-modeling journal searches
+- **Standards (1):** `skills/omd-standards/` for operational production standards
+  (`ee2-standards` — NCO Environmental Equivalence)
 - **Development workflows (8):** top-level skills under `skills/` for Git commits
   and Git Flow branches, GitHub issues and releases, GitHub Actions efficiency,
   hardening, and runtime upgrades, and prompt authoring (`git-commit`,
