@@ -121,9 +121,11 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_installer_*.py' -v
 
       - name: Build and smoke-test the packaged CLI
+        # venv: macOS GitHub runners ship PEP 668 externally-managed Python
         run: |
-          python3 -m pip install .
-          omd-skills --version
-          omd-skills --list > packaged-list.txt
+          python3 -m venv .venv-smoke
+          .venv-smoke/bin/pip install .
+          .venv-smoke/bin/omd-skills --version
+          .venv-smoke/bin/omd-skills --list > packaged-list.txt
           head -5 packaged-list.txt
-          python3 -m unittest discover -s tests -p 'test_cli_package.py' -v
+          .venv-smoke/bin/python -m unittest discover -s tests -p 'test_cli_package.py' -v
