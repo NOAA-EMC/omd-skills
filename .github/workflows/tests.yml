@@ -119,3 +119,10 @@ jobs:
 
       - name: Run installer integration tests (bash ${{ matrix.os }})
         run: python3 -m unittest discover -s tests -p 'test_installer_*.py' -v
+
+      - name: Build and smoke-test the packaged CLI
+        run: |
+          python3 -m pip install .
+          omd-skills --version
+          omd-skills --list | head -5
+          python3 -m unittest discover -s tests -p 'test_cli_package.py' -v
