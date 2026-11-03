@@ -40,6 +40,7 @@ def _write_valid_fixture(root: Path) -> None:
                 "OMD Skills",
                 "",
                 "Contact: Barry Baker <barry.baker@noaa.gov>",
+                "Catalog Contributors: Barry Baker, OMD - Modeling Division",
                 "",
                 "Known third-party subtrees:",
                 "",
@@ -261,7 +262,9 @@ class RepoPolicyValidatorTests(unittest.TestCase):
             _write_valid_fixture(root)
             write_text(
                 root / "README.md",
-                (root / "README.md").read_text(encoding="utf-8").replace("- Ian Foster\n", ""),
+                (root / "README.md")
+                .read_text(encoding="utf-8")
+                .replace("- OMD - Modeling Division\n", ""),
             )
 
             completed = subprocess.run(

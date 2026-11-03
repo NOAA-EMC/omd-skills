@@ -190,8 +190,9 @@ def build_readme_tree_lines(root: Path) -> list[str]:
     skills = root / "skills"
     lines = [
         README_ROOT_LABEL,
-        "├── unpack.sh                  # flatten skills into an agent's skills dir (Method 1)",
-        "├── skill-search/              # the upper-level discovery skill (Method 2)",
+        "├── install.sh                 # install skills + instructions into a project, with a record (Method 1)",
+        "├── unpack.sh                  # flatten skills into an agent's skills dir (Method 2, manual)",
+        "├── skill-search/              # the upper-level discovery skill (Method 3)",
         "│   ├── SKILL.md",
         "│   └── scripts/skill_search.py",
         "├── skills/",
@@ -214,23 +215,34 @@ def build_readme_tree_lines(root: Path) -> list[str]:
     return lines
 
 
+def _notice_catalog_contributors(root: Path) -> list[str]:
+    """Return the NOTICE `Catalog Contributors:` entries, in declared order."""
+
+    notice = root / "NOTICE"
+    if not notice.is_file():
+        return []
+    for line in _read(notice).splitlines():
+        if line.startswith("Catalog Contributors:"):
+            entries = [e.strip() for e in line.split(":", 1)[1].split(",") if e.strip()]
+            return entries
+    return []
+
+
 def build_readme_contributor_names(root: Path) -> list[str]:
     """Return the canonical contributor list for the README.
 
-    Contributors come from the `NOTICE` contact plus every `skills/**/ATTRIBUTION.md`
-    team and author line, so adding a skill family with an attribution file is enough
-    to have it credited.
+    The catalog-level roster mirrors the NOTICE registry (contact first, then
+    every `Catalog Contributors:` entry, de-duplicated). Attribution for
+    derived subtrees and their upstream authors lives in the per-skill
+    `skills/**/ATTRIBUTION.md` files, which the policy checks require
+    independently of this list.
     """
 
-    individuals: set[str] = set()
-
+    names: list[str] = []
     contact = _notice_contact(root)
     if contact:
-        individuals.add(contact)
-
-    teams, authors = build_attribution_contributors(root)
-    individuals.update(authors)
-
-    ordered_individuals = sorted(individuals, key=_people_sort_key)
-    ordered_teams = sorted(teams, key=str.casefold)
-    return ordered_individuals + ordered_teams
+        names.append(contact)
+    for name in _notice_catalog_contributors(root):
+        if name not in names:
+            names.append(name)
+    return names

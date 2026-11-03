@@ -1220,9 +1220,10 @@ def test_cli_profile_all_and_repeatable(tmp_path: Path) -> None:
 # --------------------------------------------------------------------------- #
 
 
-def test_shipped_catalog_discovers_at_least_30_skills() -> None:
+def test_shipped_catalog_discovers_at_least_20_skills() -> None:
+    # OMD-curated catalog floor (down from 30 under the Genesis catalog)
     discovery = vs.discover_skills([REPO_ROOT / "skills"])
-    assert len(discovery.entries) >= 30
+    assert len(discovery.entries) >= 20
     assert all(entry.filename == "SKILL.md" for entry in discovery.entries)
     assert discovery.orphans == [] and discovery.case_variants == []
 
@@ -1242,7 +1243,7 @@ def test_cli_default_paths_cover_the_catalog() -> None:
     proc = run_cli("--profile", "spec", "--list", cwd=REPO_ROOT)
     assert proc.returncode == 0, proc.stderr
     names = [line.split("\t")[0] for line in proc.stdout.splitlines()]
-    assert len(names) >= 31 and "skill-search" in names
+    assert len(names) >= 21 and "skill-search" in names
 
 
 def test_rule_ids_are_namespaced_by_profile() -> None:
