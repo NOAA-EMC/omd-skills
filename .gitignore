@@ -31,3 +31,5 @@ specs/
 src/omd_skills/templates/
 dist/
 build/
+
+.ruff_cache/
