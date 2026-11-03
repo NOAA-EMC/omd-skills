@@ -11,6 +11,11 @@ repos:
         entry: shellcheck -x
         language: system
         files: ^(unpack|install)\.sh$|^tools/installer/.*\.sh$
+      - id: ruff
+        name: ruff
+        entry: ruff check
+        language: system
+        types: [python]
       - id: markdownlint
         name: markdownlint
         entry: markdownlint --config .markdownlint.json

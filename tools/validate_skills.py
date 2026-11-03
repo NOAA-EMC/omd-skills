@@ -1,3 +1,4 @@
+# ruff: noqa: E741  # legacy single-letter list-comprehension vars; see git blame
 #!/usr/bin/env python3
 """Static compatibility validator for the SKILL.md files in this catalog.
 

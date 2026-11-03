@@ -64,7 +64,7 @@ jobs:
           go-version: stable
 
       - name: Install pre-commit
-        run: python3 -m pip install pre-commit
+        run: python3 -m pip install pre-commit ruff
 
       - name: Install shellcheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck

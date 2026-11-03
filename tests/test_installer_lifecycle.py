@@ -4,7 +4,6 @@ T023/T024/T025; quickstart V3/V4/V5/V6 scenarios)."""
 
 from __future__ import annotations
 
-import filecmp
 import shutil
 from pathlib import Path
 
@@ -52,7 +51,7 @@ class TestCatalogChange(InstallerTestCase):
         self.assertNotEqual(before, self.tree_hash(proj))
         # (b) leaf removal -> stale path pruned from project and record
         shutil.rmtree(cat / "skills" / "hpc-skills" / "pbs")
-        p3 = self.run_installer(proj, "--agents", "codex", "--mode", "copy",
+        self.run_installer(proj, "--agents", "codex", "--mode", "copy",
                                 "--domains", "hpc-skills",
                                 install_sh=cat / "install.sh")
         self.assertFalse((Path(proj) / ".agents" / "skills" / "pbs").exists(),
@@ -157,9 +156,9 @@ class TestLocalEditProtection(InstallerTestCase):
         proj = self.make_project()
         skill_md = self._install_copy(proj)
         skill_md.write_text(skill_md.read_text() + "\nlocal edit\n")
-        p = self.run_installer(proj, "--agents", "codex", "--mode", "copy",
-                               "--domains", "literature-search", check_rc=3)
-        self.assertIn("skipped-local-edit", p.stdout + p.stderr)
+        skip = self.run_installer(proj, "--agents", "codex", "--mode", "copy",
+                                  "--domains", "literature-search", check_rc=3)
+        self.assertIn("skipped-local-edit", skip.stdout + skip.stderr)
         self.assertIn("local edit", skill_md.read_text(),
                       "the local edit must still be there")
 
@@ -178,7 +177,7 @@ class TestLocalEditProtection(InstallerTestCase):
         proj = self.make_project()
         skill_md = self._install_copy(proj)
         skill_md.write_text("totally mine\n")
-        p = self.run_installer(
+        self.run_installer(
             proj, "--agents", "codex", "--mode", "copy",
             "--domains", "literature-search",
             stdin="n\n", env={"GENESIS_FORCE_INTERACTIVE": "1"}, check_rc=3)
@@ -214,6 +213,7 @@ class TestRefusals(InstallerTestCase):
         # block a skill destination with a foreign regular file
         proj = self.make_project(files={".agents/skills/git-commit": "mine\n"})
         victim = Path(proj) / ".agents" / "skills" / "git-commit"
+        self.assertTrue(victim.is_file() and not victim.is_dir())
         base = self.tree_hash(proj)
         p = self.run_installer(proj, "--agents", "codex", check_rc=3)
         self.assertEqual(base, self.tree_hash(proj))

@@ -13,8 +13,8 @@ if str(PACKAGE_PARENT) in sys.path:
     sys.path.remove(str(PACKAGE_PARENT))
 sys.path.insert(0, str(PACKAGE_PARENT))
 
-from skill_search.errors import SkillSearchError
-from skill_search.tooling import load_all_payload, progressive_disclosure_payload, search_payload
+from skill_search.errors import SkillSearchError  # noqa: E402
+from skill_search.tooling import load_all_payload, progressive_disclosure_payload, search_payload  # noqa: E402
 
 
 def build_parser() -> argparse.ArgumentParser:
