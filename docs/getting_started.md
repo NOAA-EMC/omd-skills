@@ -6,7 +6,7 @@ There is nothing to compile at the repository root.
 ## Clone The Repo
 
 ```bash
-git clone <TODO: canonical OMD repository URL>
+git clone https://github.com/NOAA-EMC/omd-skills.git
 cd omd-skills
 ```
 

@@ -40,7 +40,7 @@ Agents receive a catalog path in code instead of discovering a user-level
 directory automatically.
 
 ```bash
-git clone <TODO: canonical OMD repository URL>
+git clone https://github.com/NOAA-EMC/omd-skills.git
 cd omd-skills
 ```
 
