@@ -6,7 +6,26 @@ records what it placed so a later run can refresh, protect your edits, or
 remove it cleanly.
 
 Run it from anywhere; it finds the catalog next to itself, so a single clone
-can serve every project on the machine. No network access is used or needed.
+can serve every project on the machine. No network access is used or needed
+(the catalog travels with the tool once installed).
+
+Without a clone, install the packaged CLI (self-contained wheel bundling the
+same `install.sh` engine and catalog):
+
+```bash
+pipx install git+https://github.com/NOAA-EMC/omd-skills.git
+# or: uv tool install --from git+https://github.com/NOAA-EMC/omd-skills.git omd-skills
+# or: pip install git+https://github.com/NOAA-EMC/omd-skills.git
+omd-skills --list
+cd ~/my-project && omd-skills --agents all
+```
+
+`omd-skills` takes exactly the arguments of `install.sh` (plus `--version`);
+flags, subcommands, exit codes, and the `.ompd/` record behave identically.
+It requires `bash` at run time (Git Bash/WSL on Windows). Refreshing the
+catalog means re-installing the package (`pipx upgrade omd-skills`), unlike
+the clone workflow where `git pull` suffices — prefer a clone for active
+development of the skills themselves.
 
 ## Requirements
 

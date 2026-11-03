@@ -58,6 +58,16 @@ instructions for your agents:
 /path/to/omd-skills/install.sh --agents claude --domains hpc-skills
 ```
 
+Or install the same command as a CLI (it bundles the catalog; no clone needed):
+
+```bash
+pipx install git+https://github.com/NOAA-EMC/omd-skills.git
+# or one-off without installing:
+uvx --from git+https://github.com/NOAA-EMC/omd-skills.git omd-skills --list
+# then, from inside your project:
+omd-skills --agents all --mode copy
+```
+
 Interactive runs detect which agents a project uses and ask before placing
 anything; `--agents`, `--domains`, and `--no-interactive` cover scripting.
 `install.sh --list` previews the catalog. Installs are recorded in the
