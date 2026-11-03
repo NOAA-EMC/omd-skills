@@ -341,7 +341,7 @@ prompt_replace() { # $1 = path
 }
 
 track_rm() { printf '%s\n' "$1" >> "$TRACK_OPS"; }   # created-by-us path: safe to delete on rollback
-# shellcheck disable=SC2329  # invoked by fail_apply
+# shellcheck disable=SC2317,SC2329  # invoked by fail_apply
 rollback() {
   [ -s "$TRACK_OPS" ] || return 0
   warn "apply failed; removing content created by this run before the error"

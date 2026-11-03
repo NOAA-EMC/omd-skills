@@ -124,5 +124,6 @@ jobs:
         run: |
           python3 -m pip install .
           omd-skills --version
-          omd-skills --list | head -5
+          omd-skills --list > packaged-list.txt
+          head -5 packaged-list.txt
           python3 -m unittest discover -s tests -p 'test_cli_package.py' -v
