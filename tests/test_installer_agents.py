@@ -24,8 +24,10 @@ class TestAdapterPlacement(InstallerTestCase):
                                *self.DOM)
         dst = Path(proj) / ".github" / "instructions"
         src = CATALOG / ".github" / "instructions"
-        copied = sorted(x.name for x in dst.glob("*.md"))
-        self.assertEqual(copied, sorted(x.name for x in src.glob("*.md")))
+        # contract: delivery covers the .instructions.md family that VS Code
+        # (and install.sh) treat as instruction files
+        copied = sorted(x.name for x in dst.glob("*.instructions.md"))
+        self.assertEqual(copied, sorted(x.name for x in src.glob("*.instructions.md")))
         for name in copied:
             self.assertTrue(filecmp.cmp(dst / name, src / name, shallow=False),
                             f"copilot delivery must be byte-identical: {name}")
@@ -43,7 +45,7 @@ class TestAdapterPlacement(InstallerTestCase):
         self.assertEqual(sorted(x.name for x in rules.glob("*.mdc")),
                          sorted(x.name[:-len(".instructions.md")] + ".mdc"
                                 for x in
-                                (CATALOG / ".github" / "instructions").glob("*.md")))
+                                (CATALOG / ".github" / "instructions").glob("*.instructions.md")))
         text = mdc.read_text()
         lines = text.splitlines()
         self.assertEqual(lines[0], "---")

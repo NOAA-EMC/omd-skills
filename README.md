@@ -198,3 +198,8 @@ subtree for the licensing information supplied with that content.
 
 ## Acknowledgment
 This work was supported by the National Oceanic and Atmospheric Administration (NOAA), Ocean Modeling Division.
+
+## Disclaimer
+The United States Department of Commerce (DOC) GitHub project code is provided
+on an "as is" basis and the user assumes responsibility for its use. See the
+full statement in [DISCLAIMER](DISCLAIMER).
