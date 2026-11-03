@@ -13,6 +13,8 @@ on:
       - 'skill-search/**'
       - 'tests/**'
       - 'tools/**'
+      - 'install.sh'
+      - 'skills/**'
       - 'unpack.sh'
   push:
     branches:
@@ -28,6 +30,8 @@ on:
       - 'skill-search/**'
       - 'tests/**'
       - 'tools/**'
+      - 'install.sh'
+      - 'skills/**'
       - 'unpack.sh'
   workflow_dispatch:
 
@@ -93,3 +97,25 @@ jobs:
       - name: Run the trace-based coverage summary
         if: matrix.python-version == '3.12'
         run: make test-cov
+
+  installer:
+    name: installer suite (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Syntax check every shell script
+        run: |
+          bash -n install.sh
+          for f in tools/installer/*.sh; do bash -n "$f"; done
+
+      - name: Run installer integration tests (bash ${{ matrix.os }})
+        run: python3 -m unittest discover -s tests -p 'test_installer_*.py' -v

@@ -30,11 +30,14 @@ Agents can select a skill from a natural-language request. Client-specific menus
 
 ## Quick Start
 
-There's nothing to compile: clone the repo, then expose the skills to your agent.
-The repository groups skills by domain (`skills/<domain>/<skill>/`), while agent
-clients generally expect each skill to be a direct child of a configured skills
-directory. `unpack.sh` flattens that layout. LangChain Deep Agents receive a
-catalog path in code instead of discovering a user-level directory automatically.
+There's nothing to compile: clone the repo, then install the skills into the
+projects your agent works in. The repository groups skills by domain
+(`skills/<domain>/<skill>/`), while agent clients generally expect each skill
+to be a direct child of a configured skills directory; `install.sh` flattens
+that layout, also adapts the `.github/instructions/` files to each agent, and
+records what it placed so it can update or remove it later. LangChain Deep
+Agents receive a catalog path in code instead of discovering a user-level
+directory automatically.
 
 ```bash
 git clone <TODO: canonical OMD repository URL>
@@ -44,9 +47,30 @@ cd omd-skills
 > This catalog is derived in part from the DOE/ModCon **Genesis Skills** collection; see
 > [NOTICE](NOTICE) for the upstream provenance of the retained subtrees.
 
-### Method 1 — Flatten skills into place (`unpack.sh`)
+### Method 1 — Install into a project (`install.sh`)
 
-Choose the skills directory documented by your client, then let `unpack.sh`
+From inside any project (or with `--project`), place the skills and
+instructions for your agents:
+
+```bash
+/path/to/omd-skills/install.sh --agents all --mode copy
+# or target one client:
+/path/to/omd-skills/install.sh --agents claude --domains hpc-skills
+```
+
+Interactive runs detect which agents a project uses and ask before placing
+anything; `--agents`, `--domains`, and `--no-interactive` cover scripting.
+`install.sh --list` previews the catalog. Installs are recorded in the
+project's `.ompd/genesis.lock`, so a later re-run refreshes only changed
+material, protects files you edited locally, and `--uninstall` removes (or
+partially removes) exactly what was installed. See
+[docs/agent-install.md](docs/agent-install.md) for the per-agent layout, the
+`copy` vs `symlink` modes, and uninstall behavior.
+
+### Method 2 — Flatten manually for one directory (`unpack.sh`)
+
+For a quick manual placement without an install record, `unpack.sh` remains
+the advanced path: choose the skills directory documented by your client and
 flatten every skill into it:
 
 ```bash
@@ -58,9 +82,10 @@ export SKILLS_DIR="$HOME/.agents/skills"  # Codex, Cursor, OpenCode, Gemini CLI
 Use `--mode symlink` for live links back to the clone, `./unpack.sh hpc-skills`
 for one domain, `./unpack.sh --list` to preview, or `./unpack.sh --help` for all
 options. The legacy default remains `.claude/skills`; an explicit `--target` is
-the client-neutral choice. Existing same-named destination entries are replaced.
+the client-neutral choice. Existing same-named destination entries are replaced;
+`unpack.sh` keeps no record, so prefer `install.sh` for managed projects.
 
-### Method 2 — Point the `skill-search` skill at the catalog
+### Method 3 — Point the `skill-search` skill at the catalog
 
 Expose just the bundled `skill-search` skill; it discovers the whole nested catalog
 on demand, either via standard progressive disclosure or a keyword search tool:
@@ -92,8 +117,9 @@ immediately, follow the client's documented refresh behavior.
 
 ```
 omd-skills/
-├── unpack.sh                  # flatten skills into an agent's skills dir (Method 1)
-├── skill-search/              # the upper-level discovery skill (Method 2)
+├── install.sh                 # install skills + instructions into a project, with a record (Method 1)
+├── unpack.sh                  # flatten skills into an agent's skills dir (Method 2, manual)
+├── skill-search/              # the upper-level discovery skill (Method 3)
 │   ├── SKILL.md
 │   └── scripts/skill_search.py
 ├── skills/

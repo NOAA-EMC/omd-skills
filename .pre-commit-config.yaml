@@ -8,9 +8,9 @@ repos:
         files: ^\.github/workflows/.*\.ya?ml$
       - id: shellcheck
         name: shellcheck
-        entry: shellcheck
+        entry: shellcheck -x
         language: system
-        files: ^unpack\.sh$
+        files: ^(unpack|install)\.sh$|^tools/installer/.*\.sh$
       - id: markdownlint
         name: markdownlint
         entry: markdownlint --config .markdownlint.json

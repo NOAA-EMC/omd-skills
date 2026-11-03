@@ -23,3 +23,6 @@ login.tmp
 docs/superpowers/
 specs/
 .specify/
+
+# Installer state directory (install.sh lock/staging)
+.ompd/
