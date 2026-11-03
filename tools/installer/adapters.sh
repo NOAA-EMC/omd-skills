@@ -15,12 +15,12 @@ adapter_valid() {
   return 0
 }
 
-# Project-relative skills dir; "" means the agent has none in v1 (copilot).
+# Project-relative skills dir; "" means the agent has no skills location.
 adapter_skills_dir() {
   case "$1" in
     claude)                    printf '.claude/skills' ;;
     codex|opencode|gemini|cursor) printf '.agents/skills' ;;
-    copilot)                   printf '' ;;
+    copilot)                   printf '.github/skills' ;;
     *) return 1 ;;
   esac
 }
@@ -46,7 +46,7 @@ adapter_fingerprints() {
     opencode) printf 'opencode.json opencode.jsonc' ;;
     gemini)   printf 'GEMINI.md .gemini' ;;
     cursor)   printf '.cursor' ;;
-    copilot)  printf '.github/copilot-instructions.md .github/instructions' ;;
+    copilot)  printf '.github/copilot-instructions.md .github/instructions .github/skills' ;;
     *)        printf '' ;;
   esac
 }

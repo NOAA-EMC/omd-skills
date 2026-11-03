@@ -68,7 +68,7 @@ confirmation before writing anything.
 | OpenCode | `.agents/skills/<skill>/` (shared) | Managed block in `AGENTS.md` (shared) |
 | Gemini CLI | `.agents/skills/<skill>/` (shared) | Managed block in `GEMINI.md` |
 | Cursor | `.agents/skills/<skill>/` (shared) | `.cursor/rules/*.mdc` (translated `applyTo:` → `globs:`, `alwaysApply` set false) |
-| Copilot | — (reads instructions only) | `.github/instructions/*.instructions.md` (byte-identical to the catalog) |
+| Copilot | `.github/skills/<name>/` (verbatim catalog tree) | `.github/instructions/*.instructions.md` (byte-identical to the catalog) |
 
 Skills from several clients share one path when the agent documentation agrees
 on it (e.g. Codex, OpenCode, Gemini CLI, and Cursor all read
@@ -135,8 +135,9 @@ project with a `.ompd/` directory this installer did not create.
 
 - `symlink` mode links into your clone: keep the clone where it is, or
   re-install with `copy` before deleting it.
-- Copilot receives instruction files only; its skills story differs per
-  client version and is intentionally out of scope for v1.
+- Copilot skills land in the repository-native `.github/skills/` location
+  (verbatim copies, same rules as other agents); instruction files are
+  copied unchanged to `.github/instructions/`.
 - Cursor rules are generated with `alwaysApply: false` so they act as
   suggested instructions on matching files, not forced context.
 - The tool is offline by design: it reads only the catalog clone.

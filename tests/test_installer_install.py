@@ -129,18 +129,17 @@ class TestSkillsInstall(InstallerTestCase):
         self.assertEqual(proc.returncode, 2, proc.stderr)
         self.assertNotIn("Installed", proc.stdout)
 
-    def test_copilot_gets_no_skills_entries(self) -> None:
-        """Contract agent table: copilot has no skills location; skills are
-        skipped-with-note, not an error."""
+    def test_copilot_installs_skills_to_github_dir(self) -> None:
+        """Contract agent table: copilot installs into the repository-native
+        .github/skills location."""
         proj = self.make_project()
         proc = self.run_installer(proj, "--agents", "copilot", "--skills", "git-commit")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertFalse((Path(proj) / ".agents").exists())
         self.assertFalse((Path(proj) / ".claude").exists())
         skill_paths = {e["path"] for e in self.entries_for(proj, "skill")}
-        self.assertEqual(skill_paths, set())
-        joined = (proc.stdout + proc.stderr).lower()
-        self.assertIn("skill", joined)  # must state nothing installed / skipped for copilot
+        self.assertEqual(skill_paths, {".github/skills/git-commit"})
+        self.assertTrue((Path(proj) / ".github" / "skills" / "git-commit" / "SKILL.md").is_file())
 
 
 if __name__ == "__main__":

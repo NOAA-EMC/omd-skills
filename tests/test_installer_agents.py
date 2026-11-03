@@ -13,12 +13,17 @@ from installer_fixtures import INSTALL_SH, REPO, InstallerTestCase
 CATALOG = REPO
 
 
+def path_is_in_domain(skill_md: Path, domains: tuple) -> bool:
+    rel = skill_md.relative_to(CATALOG / "skills")
+    return rel.parts[0] in domains
+
+
 class TestAdapterPlacement(InstallerTestCase):
     """Each adapter's skills dir / instruction delivery per the contract."""
 
     DOM = ("--domains", "omd-standards,literature-search")
 
-    def test_copilot_verbatim_instructions_only(self) -> None:
+    def test_copilot_verbatim_skills_and_instructions(self) -> None:
         proj = self.make_project()
         p = self.run_installer(proj, "--agents", "copilot", "--mode", "copy",
                                *self.DOM)
@@ -31,9 +36,33 @@ class TestAdapterPlacement(InstallerTestCase):
         for name in copied:
             self.assertTrue(filecmp.cmp(dst / name, src / name, shallow=False),
                             f"copilot delivery must be byte-identical: {name}")
-        # copilot has no skills location (contracts table)
-        self.assertIn("skills: skipped", p.stdout)
-        self.assertEqual(self.entries_for(proj, "skill"), [])
+        # Copilot is a first-class skills target: verbatim leaf trees under
+        # .github/skills, the native repository skills location.
+        self.assertNotIn("skills: skipped", p.stdout)
+        skill_paths = sorted(e["path"] for e in self.entries_for(proj, "skill"))
+        self.assertTrue(skill_paths)
+        for path in skill_paths:
+            self.assertTrue(path.startswith(".github/skills/"), path)
+        sroot = Path(proj) / ".github" / "skills"
+        cat_skills = CATALOG / "skills"
+        src_leaves = {
+            leaf.parent.name
+            for leaf in cat_skills.rglob("SKILL.md")
+            if path_is_in_domain(leaf, ("omd-standards", "literature-search"))
+        }
+        self.assertEqual(sorted(x.name for x in sroot.iterdir()),
+                         sorted(src_leaves))
+        for name in src_leaves:
+            src_md = next(
+                leaf.parent
+                for leaf in cat_skills.rglob("SKILL.md")
+                if leaf.parent.name == name
+            ) / "SKILL.md"
+            dst_md = sroot / name / "SKILL.md"
+            self.assertTrue(dst_md.is_file(), f"missing {name}/SKILL.md")
+            self.assertTrue(filecmp.cmp(dst_md, src_md, shallow=False),
+                            f"copilot skills must be byte-identical: {name}")
+
 
     def test_cursor_mdc_conversion(self) -> None:
         proj = self.make_project()
@@ -91,8 +120,8 @@ class TestAdapterPlacement(InstallerTestCase):
         self.assertEqual(sorted(ag["agents"]), ["codex", "opencode"])
         leaves = self.catalog_leaf_count()
         skill_paths = self.paths_in(proj, "skill")
-        self.assertEqual(len(skill_paths), 2 * leaves,
-                         "one tree under .agents/skills plus one under .claude/skills")
+        self.assertEqual(len(skill_paths), 3 * leaves,
+                         "one tree each under .agents/, .claude/, .github/skills")
 
 
 class TestParityAndCompat(InstallerTestCase):
@@ -162,8 +191,12 @@ class TestMultiAgentUnion(InstallerTestCase):
                          ["codex", "cursor", "gemini", "opencode"])
         claude = [e for e in skills if e["path"] == ".claude/skills/ee2-standards"]
         self.assertEqual(claude[0]["agents"], ["claude"])
-        # copilot has no skills location at all (FR-003 v1 table)
-        self.assertNotIn("copilot", {a for e in skills for a in e["agents"]})
+        # copilot has its own skills dir; it never shares .agents/skills
+        copilot = [e for e in skills if "copilot" in e["agents"]]
+        self.assertTrue(copilot)
+        for e in copilot:
+            self.assertEqual(e["agents"], ["copilot"])
+            self.assertTrue(e["path"].startswith(".github/skills/"), e["path"])
         # instruction union: AGENTS.md shared by codex+opencode; copilot files
         agents_md = [e for e in self.lock_entries(proj) if e["path"] == "AGENTS.md"]
         self.assertEqual(sorted(agents_md[0]["agents"]), ["codex", "opencode"])
