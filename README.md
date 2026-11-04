@@ -44,8 +44,8 @@ git clone https://github.com/NOAA-EMC/omd-skills.git
 cd omd-skills
 ```
 
-> This catalog is derived in part from the DOE/ModCon **Genesis Skills** collection; see
-> [NOTICE](NOTICE) for the upstream provenance of the retained subtrees.
+> Parts of this catalog are upstream-derived works shipped under Apache-2.0; see
+> [NOTICE](NOTICE) for the provenance of the retained subtrees.
 
 ### Method 1 — Install into a project (`install.sh`)
 
@@ -71,7 +71,7 @@ omd-skills --agents all --mode copy
 Interactive runs detect which agents a project uses and ask before placing
 anything; `--agents`, `--domains`, and `--no-interactive` cover scripting.
 `install.sh --list` previews the catalog. Installs are recorded in the
-project's `.ompd/genesis.lock`, so a later re-run refreshes only changed
+project's `.ompd/omd-skills.lock`, so a later re-run refreshes only changed
 material, protects files you edited locally, and `--uninstall` removes (or
 partially removes) exactly what was installed. See
 [docs/agent-install.md](docs/agent-install.md) for the per-agent layout, the

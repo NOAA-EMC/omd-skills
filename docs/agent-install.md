@@ -85,9 +85,15 @@ Installed projects get a small bookkeeping directory:
 
 ```
 .ompd/
-├── genesis.lock          # one JSON line per managed path (add to .gitignore)
-└── genesis.lock.d/       # staged copies used for drift detection
+├── omd-skills.lock       # one JSON line per managed path (add to .gitignore)
+└── omd-skills.lock.d/    # staged copies used for drift detection
 ```
+
+A project installed by an older release keeps a `.ompd/genesis.lock` record and
+`genesis-skills` managed-block markers. The next `install.sh` run adopts them:
+the record is renamed to the names above and each managed block is rewritten
+with the current markers, without touching any other line of the file. Uninstall
+strips either generation of markers.
 
 It is purely local state; deleting it loses the ability to auto-update or
 auto-uninstall, but nothing else. Add `.ompd/` to your project's `.gitignore`.

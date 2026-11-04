@@ -253,7 +253,7 @@ class UnpackTest(unittest.TestCase):
 class ActualCatalogTest(unittest.TestCase):
     def test_entire_catalog_survives_both_modes(self):
         sources = leaves(REPO / "skills")
-        # OMD-curated catalog floor (down from 34 under the Genesis catalog)
+        # OMD-curated catalog floor (down from 34 in the upstream catalog it replaced)
         self.assertGreaterEqual(len(sources), 20)
         self.assertEqual(len({source.name for source in sources}), len(sources))
         with tempfile.TemporaryDirectory(prefix="omd full catalog ") as tmp:
