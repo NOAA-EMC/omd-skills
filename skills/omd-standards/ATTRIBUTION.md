@@ -20,6 +20,22 @@ This content is a U.S. Government work and is **not** licensed under the
 Apache-2.0 grant carried by the `skills/hpc-skills/` subtree. Placing it under a
 separate `omd-standards/` family keeps the two licenses distinct.
 
+## CMake, ecbuild, and CTest guidance
+
+The `cmake-hpc` skill is original OMD authoring, not vendored text. Its rules
+were derived from the public references below, and re-checked against the
+`ecbuild` macro sources (`ecbuild_add_executable`, `ecbuild_add_library`,
+`ecbuild_add_test`, `ecbuild_bundle`, `ecbuild_git`) at the time of writing:
+
+- CMake manual: <https://cmake.org/cmake/help/latest/>
+- ecbuild (ECMWF, Apache-2.0): <https://github.com/ecmwf/ecbuild>
+- SCORPIO/PIO documentation: <https://github.com/NCAR/scorpio>
+
+`references/ci-gating-antipatterns.md` and
+`scripts/check_cmake_antipatterns.py` encode this repository's own review
+position (a test that silently does not run is a false pass); they are not
+upstream CMake or ecbuild policy.
+
 ### Re-sync procedure
 
 1. Fetch the current RST:
