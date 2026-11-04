@@ -142,7 +142,7 @@ omd-skills/
 │   ├── github-release/SKILL.md
 │   ├── hpc-skills/  # pbs, rdhpcs-cloud, rdhpcs-gaea, rdhpcs-hera, rdhpcs-hercules, rdhpcs-mercury, rdhpcs-orion, rdhpcs-ppan, rdhpcs-ursa, slurm (10)
 │   ├── literature-search/SKILL.md
-│   ├── omd-standards/  # ee2-standards (1)
+│   ├── omd-standards/  # cmake-hpc, ee2-standards (2)
 │   └── prompt-optimizer/SKILL.md
 ├── CONTRIBUTING.md
 ├── LICENSE
