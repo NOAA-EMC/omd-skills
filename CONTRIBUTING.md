@@ -23,6 +23,9 @@ Skills are organized by domain in the `skills/` directory:
 - **Standards (2):** `skills/omd-standards/` for operational production standards
   (`ee2-standards` — NCO Environmental Equivalence; `cmake-hpc` — CMake, ecbuild,
   and CTest for HPC builds)
+- **Code review (1):** `skills/code-review/` for end-to-end pull request review
+  (`pr-review` — revision pinning, comment triage, CI false-confidence checks,
+  and a pending-only draft review)
 - **Development workflows (8):** top-level skills under `skills/` for Git commits
   and Git Flow branches, GitHub issues and releases, GitHub Actions efficiency,
   hardening, and runtime upgrades, and prompt authoring (`git-commit`,
@@ -67,7 +70,8 @@ The repository includes [.pre-commit-config.yaml](.pre-commit-config.yaml) for w
 
 VS Code Copilot instruction files live in [.github/instructions/](.github/instructions/) and are picked up automatically for matching files:
 
-- [code-review-generic.instructions.md](.github/instructions/code-review-generic.instructions.md) — language-aware review checks for C, C++, Fortran, Python, and Bash, plus testing expectations. Its `applyTo` globs limit it to those file types so it does not load on unrelated requests.
+- [code-review-generic.instructions.md](.github/instructions/code-review-generic.instructions.md) — language-aware review checks for C, C++, Fortran, Python, and Bash, plus testing expectations. Its `applyTo` globs limit it to those file types so it does not load on unrelated requests. These are the passive checks a VS Code request sees; to conduct a full review of a
+  pull request as a workflow, see the [`pr-review` skill](skills/code-review/pr-review/SKILL.md).
 - [makefile.instructions.md](.github/instructions/makefile.instructions.md) — GNU Make conventions for the root `Makefile` and any skill makefiles.
 - [cmake.instructions.md](.github/instructions/cmake.instructions.md) — CMake/ecbuild/CTest rules for `CMakeLists.txt` and `.cmake` files, including the rule that a test may never be gated on `if( EXISTS ... )` without a visible skip.
 

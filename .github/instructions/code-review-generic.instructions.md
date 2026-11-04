@@ -8,6 +8,12 @@ excludeAgent: ["coding-agent"]
 
 Comprehensive code review guidelines for GitHub Copilot that can be adapted to any project. These instructions follow best practices from prompt engineering and provide a structured approach to code quality, security, testing, and architecture review, with per-language guidance for C, C++, Fortran, Python, and Bash.
 
+> **Reviewing a pull request?** This file holds the passive per-language checks
+> that load while editing. For an end-to-end review of an opened pull request
+> (pinned revisions, existing-comment triage, CI false-confidence checks, and a
+> draft review payload) use the
+> [`pr-review` skill](../../skills/code-review/pr-review/SKILL.md).
+
 ## Review Language
 
 When performing a code review, respond in **English** (or specify your preferred language).

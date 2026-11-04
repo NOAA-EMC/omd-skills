@@ -21,10 +21,14 @@
 └── instructions/
     ├── ee2-standards.md               (Applies to ALL files: Master NCO EE2 constraints)
     ├── hpc-libraries.md               (Applies to compiled/py: ESMF, PIO, NetCDF, Zarr)
+    ├── code-review-generic.instructions.md  (Applies to compiled/py/sh: per-language review checks)
     ├── bash.instructions.md           (Applies to *.sh, *.bash: Google Shell Style & J-Jobs)
     ├── python.instructions.md         (Applies to *.py: Aero Persona, Pangeo Stack, PyTorch/JAX)
     ├── fortran.instructions.md        (Applies to *.f90, *.F90: Flux Persona, Hybrid Parallelism)
-    └── cpp.instructions.md            (Applies to *.cpp, *.hpp: Forge Persona, C++23, std::mdspan)
+    ├── cpp.instructions.md            (Applies to *.cpp, *.hpp: Forge Persona, C++23, std::mdspan)
+    ├── cmake.instructions.md          (Applies to CMakeLists.txt, *.cmake: modern CMake, ecbuild, CTest)
+    ├── makefile.instructions.md       (Applies to Makefiles: GNU Make conventions)
+    └── oop-design-patterns.instructions.md  (Applies to py/java/ts/js/cs: SOLID and GoF patterns)
 ```
 
 ### 2.1 Instruction Precedence (Required)
