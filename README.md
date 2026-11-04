@@ -23,8 +23,10 @@ Skills are markdown files (`SKILL.md`) with YAML frontmatter that teach an AI ag
 Agents can select a skill from a natural-language request. Client-specific menus and explicit invocation shortcuts vary by agent.
 
 > **Code review guidance.** OMD's language-aware review checklist for C, C++, Fortran, Python,
-> and Bash lives in [.github/instructions/code-review-generic.instructions.md](.github/instructions/code-review-generic.instructions.md).
-> VS Code loads it automatically for matching files.
+> and Bash lives in [.github/instructions/code-review-generic.instructions.md](.github/instructions/code-review-generic.instructions.md),
+> and VS Code loads it automatically for matching files. To run a full structured review of a
+> pull request — pinned revisions, comment triage, CI false-confidence checks, and a draft
+> (pending) review — use the [pr-review](skills/code-review/pr-review/SKILL.md) skill.
 
 ---
 
@@ -133,6 +135,7 @@ omd-skills/
 │   ├── SKILL.md
 │   └── scripts/skill_search.py
 ├── skills/
+│   ├── code-review/  # pr-review (1)
 │   ├── git-commit/SKILL.md
 │   ├── git-flow-branch-creator/SKILL.md
 │   ├── github-actions-efficiency/SKILL.md
