@@ -54,9 +54,15 @@ RDHPCS machines, and CI runners with GNU, IntelLLVM, or Cray compilers.
   test because its input file is absent in the checkout is a silent pass; see
   `references/ci-gating-antipatterns.md` before adding any `if(EXISTS ...)`
   around `add_test` or `ecbuild_add_test`.
-- **Out-of-source builds only** (`ecbuild_check_outsource`), and a project that
-  pins its own `cmake_minimum_required(VERSION 3.23)` at the top of
-  `CMakeLists.txt`.
+- **Out-of-source builds only**, enforced in the project's own `CMakeLists.txt`
+  (ecbuild has no outsource guard macro), and a project that pins its own
+  `cmake_minimum_required(VERSION 3.23)` at the top of `CMakeLists.txt`:
+
+  ```cmake
+  if(CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
+    message(FATAL_ERROR "In-source builds are not allowed; use -S <src> -B <build>")
+  endif()
+  ```
 
 ## Gate check
 
