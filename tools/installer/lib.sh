@@ -1,4 +1,4 @@
-# lib.sh — shared helpers for genesis-skills install.sh (sourced, not executable).
+# lib.sh — shared helpers for omd-skills install.sh (sourced, not executable).
 # shellcheck shell=bash
 set -euo pipefail
 unset CDPATH
