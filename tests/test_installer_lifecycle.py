@@ -4,6 +4,7 @@ T023/T024/T025; quickstart V3/V4/V5/V6 scenarios)."""
 
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 
@@ -30,6 +31,68 @@ class TestIdempotence(InstallerTestCase):
             a = {k: v for k, v in a.items() if k != "ts"}
             b = {k: v for k, v in b.items() if k != "ts"}
             self.assertEqual(a, b, "record must only refresh timestamps")
+
+
+
+class TestCacheHygiene(InstallerTestCase):
+    """A cache in the catalog source must never reach a project or the record.
+
+    The wheel build skips ``__pycache__``/``*.pyc``/``.DS_Store``, so a clone
+    install that carried them would both litter the project and make the recorded
+    hash differ from a ``pipx`` install of the same catalog. Dropping them keeps
+    those two paths byte-identical and keeps re-installs idempotent.
+    """
+
+    def test_installed_tree_excludes_caches_from_the_source(self) -> None:
+        cat = self.make_catalog_copy()
+        cache = cat / "skills" / "hpc-skills" / "slurm" / "scripts" / "__pycache__"
+        cache.mkdir(parents=True, exist_ok=True)
+        (cache / "stale.cpython-314.pyc").write_bytes(b"byte-compiled droppings")
+        (cat / "skills" / "hpc-skills" / "slurm" / ".DS_Store").write_bytes(b"dropping")
+        proj = self.make_project()
+        p1 = self.run_installer(proj, "--agents", "codex", "--mode", "copy",
+                                "--domains", "hpc-skills",
+                                install_sh=cat / "install.sh")
+        self.assertIn("created=1", p1.stdout)
+        installed = Path(proj) / ".agents" / "skills" / "slurm"
+        self.assertFalse((installed / "scripts" / "__pycache__").exists(),
+                         "byte-compiled caches must not be installed")
+        self.assertFalse((installed / ".DS_Store").exists(),
+                         "Finder droppings must not be installed")
+        self.assertTrue((installed / "SKILL.md").is_file(), "the skill itself installs")
+        # the recorded hash describes the installed tree, so a re-run is unchanged
+        p2 = self.run_installer(proj, "--agents", "codex", "--mode", "copy",
+                                "--domains", "hpc-skills",
+                                install_sh=cat / "install.sh")
+        self.assertIn("unchanged=1", p2.stdout,
+                     "a cache in the source must not look like a catalog change")
+
+    def test_dirty_and_clean_catalogs_install_identically(self) -> None:
+        """The clone path must match a cache-free catalog byte for byte."""
+        dirty = self.make_catalog_copy()
+        clean = self.make_catalog_copy()
+        for root in (dirty, clean):
+            for dirpath, dirnames, filenames in os.walk(root / "skills"):
+                for name in list(dirnames) + list(filenames):
+                    if name == "__pycache__" or name.endswith((".pyc", ".DS_Store")):
+                        target = Path(dirpath) / name
+                        (shutil.rmtree if target.is_dir() else target.unlink)(target)
+        cache = dirty / "skills" / "hpc-skills" / "slurm" / "scripts" / "__pycache__"
+        cache.mkdir(parents=True, exist_ok=True)
+        (cache / "a.pyc").write_bytes(b"compiled at some point")
+        (dirty / "skills" / "hpc-skills" / "slurm" / ".DS_Store").write_bytes(b"finder")
+
+        proj_dirty = self.make_project()
+        proj_clean = self.make_project()
+        self.run_installer(proj_dirty, "--agents", "codex", "--mode", "copy",
+                           "--domains", "hpc-skills", install_sh=dirty / "install.sh")
+        self.run_installer(proj_clean, "--agents", "codex", "--mode", "copy",
+                           "--domains", "hpc-skills", install_sh=clean / "install.sh")
+        self.assertEqual(self.tree_hash(proj_dirty), self.tree_hash(proj_clean),
+                         "a stray cache must not change what a project receives")
+        hashes = [{e["path"]: e.get("hash") for e in self.lock_entries(proj)}
+                  for proj in (proj_dirty, proj_clean)]
+        self.assertEqual(hashes[0], hashes[1], "recorded hashes must agree")
 
 
 class TestCatalogChange(InstallerTestCase):

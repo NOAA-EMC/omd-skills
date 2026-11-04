@@ -212,7 +212,14 @@ main() {
       [[ -n "$name" ]] || continue
       local out="$dest/$name"
       [[ -e "$out" || -L "$out" ]] && rm -rf "$out"
-      if [[ "$MODE" == "symlink" ]]; then ln -s "$dir" "$out"; else cp -R "$dir" "$out"; fi
+      if [[ "$MODE" == "symlink" ]]; then
+        ln -s "$dir" "$out"
+      else
+        cp -R "$dir" "$out"
+        # byte-compiled caches and Finder droppings are not part of a skill
+        find "$out" \( -name '__pycache__' -o -name '.DS_Store' \) -prune -exec rm -rf {} + 2>/dev/null || true
+        find "$out" -type f -name '*.py[cod]' -delete 2>/dev/null || true
+      fi
     done <<< "$rows"
     printf 'unpacked %s skill(s) (%s) -> %s\n' "$total" "$MODE" "$dest"
   done

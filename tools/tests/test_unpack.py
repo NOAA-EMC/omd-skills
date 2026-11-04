@@ -16,11 +16,23 @@ REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "unpack.sh"
 
 
+def _is_cache(rel: str) -> bool:
+    """Byte-compiled and Finder droppings: never part of a skill's content.
+
+    Copy mode prunes them (and install.sh does too), so a comparison that counted
+    them would fail for a source tree that had ever been imported by a test.
+    """
+    parts = rel.split("/")
+    return ("__pycache__" in parts or rel.endswith((".pyc", ".pyo", ".DS_Store")))
+
+
 def manifest(root: Path) -> dict[str, tuple]:
     """Independently compare names, bytes, link text, and executable bits."""
     result = {}
     for path in sorted(root.rglob("*")):
         rel = str(path.relative_to(root))
+        if _is_cache(rel):
+            continue
         if path.is_symlink():
             result[rel] = ("link", os.readlink(path))
         elif path.is_file():
@@ -103,6 +115,21 @@ class UnpackTest(unittest.TestCase):
         shutil.rmtree(self.repo)
         self.assertTrue((self.dest / "solo/SKILL.md").is_file())
         self.assertEqual((self.dest / "beta/alpha-resource").read_bytes(), b"hidden\x00asset")
+
+    def test_copy_drops_caches_and_editor_droppings(self):
+        """A dirty catalog must not install byte-compiled caches."""
+        stale = self.alpha / "scripts" / "__pycache__"
+        stale.mkdir(parents=True)
+        (stale / "runcpy.cpython-314.pyc").write_bytes(b"\x00\x01not part of the skill")
+        (stale / "keep.txt").write_text("a non-cache file inside a cache dir\n", encoding="utf-8")
+        (self.alpha / ".DS_Store").write_bytes(b"dropping")
+        self.success("--mode", "copy", "--target", self.dest)
+        installed = self.dest / "alpha"
+        self.assertFalse((installed / "scripts" / "__pycache__").exists())
+        self.assertFalse((installed / ".DS_Store").exists())
+        self.assertTrue((installed / "scripts" / "run.sh").exists())
+        # the source tree is untouched: pruning is about the installed copy
+        self.assertTrue((stale / "runcpy.cpython-314.pyc").exists())
 
     def test_symlink_live_updates(self):
         self.success("--target", self.dest)
