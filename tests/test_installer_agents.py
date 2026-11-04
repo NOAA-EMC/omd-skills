@@ -97,7 +97,7 @@ class TestAdapterPlacement(InstallerTestCase):
         for fname in ("CLAUDE.md", "GEMINI.md"):
             self.assertFalse((Path(proj) / "AGENTS.md").exists())
             text = (Path(proj) / fname).read_text()
-            self.assertIn("genesis-skills:begin", text, fname)
+            self.assertIn("omd-skills:begin", text, fname)
             self.assertIn("Source:", text, fname)
         self.assertIn("# mine", (Path(proj) / "CLAUDE.md").read_text())
         self.assertIn("# gemine", (Path(proj) / "GEMINI.md").read_text())
@@ -133,7 +133,7 @@ class TestParityAndCompat(InstallerTestCase):
         proj_b = self.make_project()
         proc_b = self.run_installer(
             proj_b, "--mode", "copy", stdin="all\n",
-            env={"GENESIS_FORCE_INTERACTIVE": "1"})
+            env={"OMD_FORCE_INTERACTIVE": "1"})
         self.assertEqual(proc_a.returncode, proc_b.returncode)
         # compare trees with the project path stripped out of any file text
         self.assertEqual(self.tree_hash(proj_a), self.tree_hash(proj_b))
@@ -218,7 +218,7 @@ class TestModeParity(InstallerTestCase):
                                install_sh=cat / "install.sh")
         b = self.run_installer(
             proj_b, "--mode", "copy", "--domains", "literature-search",
-            stdin="claude,codex\n", env={"GENESIS_FORCE_INTERACTIVE": "1"},
+            stdin="claude,codex\n", env={"OMD_FORCE_INTERACTIVE": "1"},
             install_sh=cat / "install.sh")
         self.assertEqual(self.tree_hash(proj_a), self.tree_hash(proj_b))
         la = [json.dumps({k: v for k, v in e.items() if k != "ts"}, sort_keys=True)
