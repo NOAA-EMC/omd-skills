@@ -121,11 +121,12 @@ class TestUninstall(InstallerTestCase):
         claude_md = Path(proj) / "CLAUDE.md"
         text = claude_md.read_text()
         self.assertIn("# My prose", text)
-        self.assertIn("genesis-skills:begin", text)
+        self.assertIn(self.MARK_BEGIN, text)
         self.run_installer(proj, "--agents", "claude", "--uninstall")
         after = claude_md.read_text()
         self.assertIn("# My prose", after, "user prose must survive")
-        self.assertNotIn("genesis-skills", after, "managed blocks must be stripped")
+        self.assertNotIn("omd-skills", after, "managed blocks must be stripped")
+        self.assertNotIn("genesis-skills", after, "no block of any generation may remain")
 
     def test_t024_foreign_file_in_skill_dir_survives_uninstall(self) -> None:
         proj = self.make_project()
@@ -137,7 +138,7 @@ class TestUninstall(InstallerTestCase):
         self.assertTrue((d / "user-notes.md").is_file(),
                         "foreign files force directory retention")
         self.assertIn("files kept", p.stderr, "warn on retained foreign dir")
-        lock = Path(proj) / ".ompd" / "genesis.lock"
+        lock = Path(proj) / ".ompd" / "omd-skills.lock"
         kept_paths = ({e["path"] for e in self.lock_entries(proj)}
                       if lock.is_file() else set())
         self.assertNotIn(".agents/skills/literature-search", kept_paths,
@@ -169,7 +170,7 @@ class TestLocalEditProtection(InstallerTestCase):
         p = self.run_installer(
             proj, "--agents", "codex", "--mode", "copy",
             "--domains", "literature-search",
-            stdin="y\n", env={"GENESIS_FORCE_INTERACTIVE": "1"})
+            stdin="y\n", env={"OMD_FORCE_INTERACTIVE": "1"})
         self.assertIn("refreshed=1", p.stdout)
         self.assertNotIn("totally mine", skill_md.read_text())
 
@@ -180,7 +181,7 @@ class TestLocalEditProtection(InstallerTestCase):
         self.run_installer(
             proj, "--agents", "codex", "--mode", "copy",
             "--domains", "literature-search",
-            stdin="n\n", env={"GENESIS_FORCE_INTERACTIVE": "1"}, check_rc=3)
+            stdin="n\n", env={"OMD_FORCE_INTERACTIVE": "1"}, check_rc=3)
         self.assertIn("totally mine", skill_md.read_text())
 
 
@@ -217,7 +218,7 @@ class TestRefusals(InstallerTestCase):
         base = self.tree_hash(proj)
         p = self.run_installer(proj, "--agents", "codex", check_rc=3)
         self.assertEqual(base, self.tree_hash(proj))
-        self.assertFalse((Path(proj) / ".ompd" / "genesis.lock").exists())
+        self.assertFalse((Path(proj) / ".ompd" / "omd-skills.lock").exists())
         self.assertIn("exists", p.stdout + p.stderr)
 
     def test_self_install_refuses(self) -> None:
@@ -227,7 +228,7 @@ class TestRefusals(InstallerTestCase):
 
     def test_foreign_ompd_refuses(self) -> None:
         proj = self.make_project(files={".ompd/other.lock": "foreign\n"})
-        (Path(proj) / ".ompd" / "genesis.lock.d").mkdir(exist_ok=True)
+        (Path(proj) / ".ompd" / "omd-skills.lock.d").mkdir(exist_ok=True)
         p = self.run_installer(proj, "--agents", "codex", check_rc=3)
         self.assertIn("was not created by this installer", p.stderr)
         self.assertTrue((Path(proj) / ".ompd" / "other.lock").is_file())
