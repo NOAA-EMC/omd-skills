@@ -559,6 +559,7 @@ while IFS= read -r dsk; do
       rm -rf -- "$tstage"
       mkdir -p "$tstage" || die "cannot build temp staging" 4
       cp -R "$leafdir/." "$tstage/" || die "cannot stage skill $nm" 4
+      prune_caches "$tstage"
       while IFS= read -r extra; do
         [ -n "$extra" ] || continue
         cp "$extra" "$tstage/$(basename "$extra")" || die "cannot stage license material for $nm" 4

@@ -112,11 +112,12 @@ lock_teardown() { # remove state dir entirely when empty
 # --- staging ----------------------------------------------------------------
 stage_clear_skill() { rm -Rf "$STAGE_DIR/skills/$1"; }
 
-stage_sync_skill() { # $1 = skill name, $2 = source dir (verbatim copy)
+stage_sync_skill() { # $1 = skill name, $2 = source dir (copy, minus caches)
   local dest="$STAGE_DIR/skills/$1"
   rm -Rf "$dest"
   mkdir -p "$dest"
   cp -R "$2/." "$dest/"
+  prune_caches "$dest"
 }
 
 stage_file() { # $1 = staged relative name under instructions/, $2 = src file
