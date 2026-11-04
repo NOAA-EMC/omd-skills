@@ -19,7 +19,7 @@ Most agent clients expect each skill to be a direct child of a configured skills
 
 Run `install.sh` from the project you want to equip. It flattens skills into
 the location each agent reads, adapts the `.github/instructions/` files, and
-keeps a record in `.ompd/genesis.lock` so re-runs, updates, and uninstalls stay
+keeps a record in `.ompd/omd-skills.lock` so re-runs, updates, and uninstalls stay
 safe:
 
 ```bash
