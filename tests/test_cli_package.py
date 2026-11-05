@@ -62,7 +62,7 @@ class TestCLIFrontend(InstallerTestCase):
                      "--domains", "omd-standards", "--no-interactive",
                      cwd=proj)
         self.assertEqual(p.returncode, 0)
-        lock = Path(proj) / ".ompd" / "genesis.lock"
+        lock = Path(proj) / ".ompd" / "omd-skills.lock"
         self.assertTrue(lock.is_file())
         # same destination tree as running install.sh directly for this scope
         proj2 = self.make_project()

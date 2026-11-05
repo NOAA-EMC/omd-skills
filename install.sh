@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# install.sh — install the genesis-skills catalog into a local project for AI agents.
+# install.sh — install the omd-skills catalog into a local project for AI agents.
 #
 # Installs catalog skills into each selected agent's project skills location and
 # catalog code-review instructions in the form each agent consumes them: verbatim
@@ -90,7 +90,9 @@ while [ $# -gt 0 ]; do
 done
 
 interactive() {
-  [ "$NO_INTERACTIVE" -eq 0 ] && { [ -t 0 ] || [ -n "${GENESIS_FORCE_INTERACTIVE:-}" ]; }
+  # OMD_FORCE_INTERACTIVE forces the interactive path in CI/tests. The legacy
+  # name is still accepted for one release so scripted callers keep working.
+  [ "$NO_INTERACTIVE" -eq 0 ] && { [ -t 0 ] || [ -n "${OMD_FORCE_INTERACTIVE:-${GENESIS_FORCE_INTERACTIVE:-}}" ]; }
 }
 
 hash_init
@@ -131,12 +133,16 @@ else
 fi
 
 SCOPE_D="$(printf '%s\n' "$ROWSEL" | cut -f1 | LC_ALL=C sort -u)"
+SCOPE_N="$(printf '%s\n' "$ROWSEL" | cut -f2 | LC_ALL=C sort -u)"
 source_in_scope() { # lock entry source (skills/... form); instruction sources always in scope
+  # Match on the domain (column 1) or the skill's own leaf name (column 2):
+  # a flat skill's source path has no domain component, so comparing only
+  # against domains made an individual --skills scope match nothing at all.
   [ "$UNFILTERED" -eq 1 ] && return 0
   case "$1" in skills/*) : ;; *) return 0 ;; esac
   rel="${1#skills/}"
   printf '%s\n' "$SCOPE_D" | grep -qxF -- "${rel%%/*}" || \
-    printf '%s\n' "$SCOPE_D" | grep -qxF -- "${rel##*/}"
+    printf '%s\n' "$SCOPE_N" | grep -qxF -- "${rel##*/}"
 }
 
 # ---------------------------------------------------------------------------
@@ -215,9 +221,17 @@ case "$CATALOG_ROOT/" in "$PROJECT_CANON"/*) die "refusing: target project conta
 case "$PROJECT_CANON/" in "$CATALOG_ROOT"/*) die "refusing: target project is the catalog clone or inside it" 3 ;; esac
 
 OMPD_DIR="$PROJECT_CANON/.ompd"
-LOCK_FILE="$OMPD_DIR/genesis.lock"
-STAGE_DIR="$OMPD_DIR/genesis.lock.d"
+LOCK_FILE="$OMPD_DIR/omd-skills.lock"
+STAGE_DIR="$OMPD_DIR/omd-skills.lock.d"
 export OMPD_DIR LOCK_FILE STAGE_DIR
+
+# Adopt an install record left by the pre-rename release (rename-once, so the
+# per-path hashes and staging tree stay valid; nothing is written under the
+# legacy names). See lock_migrate_legacy in tools/installer/record.sh.
+# The foreign-state check runs first: a .ompd that is not ours must neither be
+# adopted nor have its legacy-looking record moved out from under its owner.
+lock_refuse_foreign
+lock_migrate_legacy
 
 # ---------------------------------------------------------------------------
 
@@ -236,7 +250,7 @@ reagents() { # $1 = lock line, $2 = new agents csv -> line with agents array rep
 # keep the caller's stdin available for prompts (loop heredocs consume stdin)
 exec 3<&0
 
-TMPB="$(mktemp -d "${TMPDIR:-/tmp}/genesis-install.XXXXXX")" || die "cannot create temp dir" 4
+TMPB="$(mktemp -d "${TMPDIR:-/tmp}/omd-install.XXXXXX")" || die "cannot create temp dir" 4
 trap 'rm -rf -- "$TMPB"' EXIT
 TRACK_OPS="$TMPB/ops"; : > "$TRACK_OPS"
 STG="$TMPB/stage"; mkdir -p "$STG" || die "cannot create temp staging" 4
@@ -435,7 +449,9 @@ do_uninstall() {
   record_load
   local AGENT_IDS_CSV line pth typ a left keepit
   local KEPT="$TMPB/lock.kept" p f nm leaf ours cur
+  local CLEARED="$TMPB/skills.uninstall"
   local nremoved=0 nuntagged=0
+  : > "$CLEARED"
   AGENT_IDS_CSV=",$(printf '%s' "$AGENT_IDS" | paste -sd, -),"
   : > "$KEPT"
   local i
@@ -489,7 +505,11 @@ PFEF
             warn "$pth contains files this installer did not create; install-record entry dropped, files kept"
           fi
         fi
-        stage_clear_skill "$nm" ;;
+        # The staging copy is the reference every agent dir holding this skill
+        # is compared against, so it is cleared once after the whole pass
+        # below -- clearing it here would make the next agent's copy look
+        # "foreign" and be left behind.
+        printf '%s\n' "$nm" >> "$CLEARED" ;;
       instruction-file)
         if [ -f "$p" ]; then
           cur="$(file_hash "$p")"
@@ -509,6 +529,10 @@ PFEF
     esac
     nremoved=$((nremoved + 1))
   done
+  LC_ALL=C sort -u "$CLEARED" -o "$CLEARED.u"
+  while IFS= read -r nm; do
+    [ -n "$nm" ] && stage_clear_skill "$nm"
+  done < "$CLEARED.u"
   lock_commit "$KEPT"
   [ -s "$LOCK_FILE" ] || lock_teardown
   prune_empty_dirs
@@ -549,6 +573,7 @@ while IFS= read -r dsk; do
       rm -rf -- "$tstage"
       mkdir -p "$tstage" || die "cannot build temp staging" 4
       cp -R "$leafdir/." "$tstage/" || die "cannot stage skill $nm" 4
+      prune_caches "$tstage"
       while IFS= read -r extra; do
         [ -n "$extra" ] || continue
         cp "$extra" "$tstage/$(basename "$extra")" || die "cannot stage license material for $nm" 4
@@ -655,8 +680,8 @@ while IFS= read -r bf; do
   rec="$(record_find_line "$bf" || true)"
   abs="$PROJECT_CANON/$bf"
   if [ -z "$rec" ]; then
-    if [ -f "$abs" ] && block_extract "$abs" 2>/dev/null | grep -q 'genesis-skills:begin'; then
-      printf 'install.sh: refusing: %s already contains a genesis-skills block that is not recorded as managed\n' "$bf" >&2
+    if [ -f "$abs" ] && block_present "$abs"; then
+      printf 'install.sh: refusing: %s already contains a managed block that is not recorded as managed\n' "$bf" >&2
       printf 'install.sh: the file is left untouched. Remove the stray markers or use --mode files with a different agent.\n' >&2
       exit 3
     fi
@@ -668,6 +693,11 @@ while IFS= read -r bf; do
     recblock="$(lock_field_str "$rec" block_hash)"
     a2="$(csv_union "$(agents_csv_of "$rec")" "$ag")"
     if [ ! -f "$abs" ] || ! block_present "$abs"; then
+      add_row refresh "$bf" rules-block "$relsrcs" - "$a2" "$blk_hash" "$staged_rule" "$recreate" "$pre"
+    elif block_is_legacy "$abs"; then
+      # Pre-rename markers: rewrite in place so the block adopts the current
+      # generation. Only the marker lines change, so $blk_hash stays equal to
+      # the recorded block_hash and no content is disturbed.
       add_row refresh "$bf" rules-block "$relsrcs" - "$a2" "$blk_hash" "$staged_rule" "$recreate" "$pre"
     else
       cur="sha256:$(block_extract "$abs" | _h)"

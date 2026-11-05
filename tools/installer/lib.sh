@@ -1,4 +1,4 @@
-# lib.sh — shared helpers for genesis-skills install.sh (sourced, not executable).
+# lib.sh — shared helpers for omd-skills install.sh (sourced, not executable).
 # shellcheck shell=bash
 set -euo pipefail
 unset CDPATH
@@ -68,10 +68,23 @@ file_hash() { # $1=file -> sha256:<hex>
     shasum) printf 'sha256:%s' "$(shasum -a 256 -- "$1" | cut -d' ' -f1)" ;;
   esac
 }
+# --- caches -----------------------------------------------------------------
+# Byte-compiled and editor droppings are not part of a skill: they must not be
+# installed into a project, and they must not change a recorded hash. The wheel
+# build (hatch_build.py) skips the same names, which keeps a clone install and a
+# `pipx` install of this catalog byte-for-byte identical.
+prune_caches() { # $1=dir -> drop caches under it (idempotent, quiet)
+  [ -d "$1" ] || return 0
+  find "$1" \( -name '__pycache__' -o -name '.DS_Store' \) -prune -exec rm -rf {} + 2>/dev/null || true
+  find "$1" -type f \( -name '*.py[cod]' \) -delete 2>/dev/null || true
+}
+
 # Aggregate over a tree: sorted relpaths + file digests (research R5).
 _tree_rows() { # $1=canonical dir -> "relpath<TAB>digest" lines on stdout
   local f
-  ( cd "$1" && find . -type f -print | LC_ALL=C sort | while IFS= read -r f; do
+  ( cd "$1" && find . -type f \
+      ! -path '*/__pycache__/*' ! -name '*.py[cod]' ! -name '.DS_Store' \
+      -print | LC_ALL=C sort | while IFS= read -r f; do
       printf '%s\t' "${f#./}"
       case "$_hash_impl" in
         sha256sum) sha256sum -- "$f" | cut -d' ' -f1 ;;
