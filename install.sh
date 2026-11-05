@@ -133,12 +133,16 @@ else
 fi
 
 SCOPE_D="$(printf '%s\n' "$ROWSEL" | cut -f1 | LC_ALL=C sort -u)"
+SCOPE_N="$(printf '%s\n' "$ROWSEL" | cut -f2 | LC_ALL=C sort -u)"
 source_in_scope() { # lock entry source (skills/... form); instruction sources always in scope
+  # Match on the domain (column 1) or the skill's own leaf name (column 2):
+  # a flat skill's source path has no domain component, so comparing only
+  # against domains made an individual --skills scope match nothing at all.
   [ "$UNFILTERED" -eq 1 ] && return 0
   case "$1" in skills/*) : ;; *) return 0 ;; esac
   rel="${1#skills/}"
   printf '%s\n' "$SCOPE_D" | grep -qxF -- "${rel%%/*}" || \
-    printf '%s\n' "$SCOPE_D" | grep -qxF -- "${rel##*/}"
+    printf '%s\n' "$SCOPE_N" | grep -qxF -- "${rel##*/}"
 }
 
 # ---------------------------------------------------------------------------
@@ -445,7 +449,9 @@ do_uninstall() {
   record_load
   local AGENT_IDS_CSV line pth typ a left keepit
   local KEPT="$TMPB/lock.kept" p f nm leaf ours cur
+  local CLEARED="$TMPB/skills.uninstall"
   local nremoved=0 nuntagged=0
+  : > "$CLEARED"
   AGENT_IDS_CSV=",$(printf '%s' "$AGENT_IDS" | paste -sd, -),"
   : > "$KEPT"
   local i
@@ -499,7 +505,11 @@ PFEF
             warn "$pth contains files this installer did not create; install-record entry dropped, files kept"
           fi
         fi
-        stage_clear_skill "$nm" ;;
+        # The staging copy is the reference every agent dir holding this skill
+        # is compared against, so it is cleared once after the whole pass
+        # below -- clearing it here would make the next agent's copy look
+        # "foreign" and be left behind.
+        printf '%s\n' "$nm" >> "$CLEARED" ;;
       instruction-file)
         if [ -f "$p" ]; then
           cur="$(file_hash "$p")"
@@ -519,6 +529,10 @@ PFEF
     esac
     nremoved=$((nremoved + 1))
   done
+  LC_ALL=C sort -u "$CLEARED" -o "$CLEARED.u"
+  while IFS= read -r nm; do
+    [ -n "$nm" ] && stage_clear_skill "$nm"
+  done < "$CLEARED.u"
   lock_commit "$KEPT"
   [ -s "$LOCK_FILE" ] || lock_teardown
   prune_empty_dirs

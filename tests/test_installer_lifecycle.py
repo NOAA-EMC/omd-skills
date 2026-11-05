@@ -208,6 +208,53 @@ class TestUninstall(InstallerTestCase):
                          "record entry is dropped even when dir is kept")
 
 
+    def test_uninstall_removes_skill_from_every_agent_dir(self) -> None:
+        """The staging copy is shared by all dirs holding one skill.
+
+        Regression: clearing ``.ompd/omd-skills.lock.d/skills/<name>`` inside
+        the record pass meant the ownership check for every later copy of the
+        same skill found no reference to compare against, decided the
+        directory was foreign, and left it in place -- so ``--agents all``
+        (three agent dirs per skill) removed one copy and silently orphaned
+        the other two.
+        """
+        proj = self.make_project()
+        self.run_installer(proj, "--agents", "all", "--mode", "copy",
+                           "--skills", "cmake-hpc")
+        dirs = self.skill_dirs(proj, "cmake-hpc")
+        self.assertGreater(len(dirs), 1, "multi-agent install is the point")
+        proc = self.run_installer(proj, "--agents", "all", "--uninstall")
+        for d in dirs:
+            self.assertFalse(d.exists(), f"{d} must be removed by uninstall")
+        self.assertNotIn("did not create", proc.stderr,
+                         "the copies are ours; no foreign-content warning")
+
+    def test_scoped_uninstall_matches_individual_skill_names(self) -> None:
+        """``--skills`` on uninstall selects skills, not only domains.
+
+        Regression: scope was tested against domain names only, so a flat
+        skill (no domain path component) matched nothing and an individually
+        scoped uninstall removed no skill copies at all.
+        """
+        proj = self.make_project()
+        self.run_installer(proj, "--agents", "all", "--mode", "copy",
+                           "--skills", "git-commit,cmake-hpc")
+        flat = self.skill_dirs(proj, "git-commit")
+        kept = self.skill_dirs(proj, "cmake-hpc")
+        self.assertTrue(flat and kept)
+        proc = self.run_installer(proj, "--agents", "all",
+                                  "--skills", "git-commit", "--uninstall")
+        self.assertEqual("", proc.stderr.strip(), "no warnings expected")
+        for d in flat:
+            self.assertFalse(d.exists(), f"{d} is in scope and must go")
+        for d in kept:
+            self.assertTrue(d.is_dir(), f"{d} is out of scope and must stay")
+        paths = {e["path"] for e in self.lock_entries(proj)} \
+            if (Path(proj) / ".ompd" / "omd-skills.lock").is_file() else set()
+        self.assertFalse(any("git-commit" in p for p in paths))
+        self.assertTrue(any("cmake-hpc" in p for p in paths))
+
+
 class TestLocalEditProtection(InstallerTestCase):
     """US4: edits after install are never silently clobbered."""
 
