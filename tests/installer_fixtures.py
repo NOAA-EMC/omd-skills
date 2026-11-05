@@ -147,6 +147,10 @@ class InstallerTestCase(unittest.TestCase):
     def ompd(self, project: str) -> Path:
         return Path(project) / ".ompd"
 
+    def skill_dirs(self, project: str, name: str) -> list[Path]:
+        """Project directories an install placed skill `name` in."""
+        return sorted({p.parent for p in Path(project).glob(f"*/skills/{name}/SKILL.md")})
+
     def lock_entries(self, project: str, name: str | None = None) -> list[dict]:
         """Install-record entries. With no `name`, reads whichever generation
         the project currently has, so pre-rename state can be inspected."""
