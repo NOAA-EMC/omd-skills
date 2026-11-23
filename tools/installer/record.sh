@@ -1,4 +1,4 @@
-# record.sh — .ompd/genesis.lock JSONL + staging tree I/O (research R5).
+# record.sh — .ompd/omd-skills.lock JSONL + staging tree I/O (research R5).
 # shellcheck shell=bash
 # Physical format: specs/001-multi-agent-installer/contracts/install-record.md.
 
@@ -48,15 +48,47 @@ record_json_agents() { # "a,b" -> "\"a\",\"b\"" (validated ids only, no escaping
 }
 
 # --- locking & commit ------------------------------------------------------
+# One-time, one-way rename of pre-rename state names onto the current ones.
+# Legacy paths are recognized only here; nothing new is ever written under the
+# old names. Content is untouched, so recorded hashes stay valid.
+lock_migrate_legacy() {
+  local llock="$OMPD_DIR/genesis.lock" lstage="$OMPD_DIR/genesis.lock.d" moved=0
+  if [ -e "$llock" ]; then
+    if [ -e "$LOCK_FILE" ]; then
+      warn "both a legacy and a current install record exist; using $LOCK_FILE and leaving the legacy record untouched"
+    elif [ -s "$llock" ] && ! head -n 1 -- "$llock" | grep -Fq '{"v":1,"type":'; then
+      die "$llock is not an install record of this format; refusing to manage it" 3
+    else
+      mv -- "$llock" "$LOCK_FILE" || die "cannot migrate the legacy install record to $LOCK_FILE" 4
+      moved=1
+    fi
+  fi
+  # The staging tree moves only together with its record; an orphaned legacy
+  # staging dir is left as found (it belongs to an install we are not adopting).
+  if [ "$moved" = 1 ] && [ -d "$lstage" ]; then
+    if [ -e "$STAGE_DIR" ]; then
+      warn "both a legacy and a current staging tree exist; using $STAGE_DIR and leaving the legacy tree untouched"
+    else
+      mv -- "$lstage" "$STAGE_DIR" || die "cannot migrate the legacy staging tree to $STAGE_DIR" 4
+    fi
+  fi
+  [ "$moved" = 1 ] && warn "migrated the previous install record to $(basename "$LOCK_FILE")"
+  return 0
+}
+
 lock_refuse_foreign() { # .ompd exists but is not ours => never touched
   [ -e "$OMPD_DIR" ] || return 0
   [ -f "$LOCK_FILE" ] && return 0
-  # No lock yet: tolerate an empty dir or our own staging skeleton.
+  # No lock yet: tolerate an empty dir or our own staging skeleton (either
+  # generation of the staging directory name, so a legacy install can migrate).
   local entry base ok=1
   for entry in "$OMPD_DIR"/* "$OMPD_DIR"/.[!.]* "$OMPD_DIR"/..?*; do
     [ -e "$entry" ] || continue            # unmatched glob literal
     base="$(basename "$entry")"
-    [ "$base" = "genesis.lock.d" ] && continue
+    case "$base" in
+      omd-skills.lock.d|omd-skills.lock.tmp.*|genesis.lock.d) continue ;;
+      genesis.lock) continue ;;            # pending migration
+    esac
     ok=0
   done
   [ "$ok" = 1 ] && return 0
@@ -80,11 +112,12 @@ lock_teardown() { # remove state dir entirely when empty
 # --- staging ----------------------------------------------------------------
 stage_clear_skill() { rm -Rf "$STAGE_DIR/skills/$1"; }
 
-stage_sync_skill() { # $1 = skill name, $2 = source dir (verbatim copy)
+stage_sync_skill() { # $1 = skill name, $2 = source dir (copy, minus caches)
   local dest="$STAGE_DIR/skills/$1"
   rm -Rf "$dest"
   mkdir -p "$dest"
   cp -R "$2/." "$dest/"
+  prune_caches "$dest"
 }
 
 stage_file() { # $1 = staged relative name under instructions/, $2 = src file

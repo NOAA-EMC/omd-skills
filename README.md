@@ -23,8 +23,10 @@ Skills are markdown files (`SKILL.md`) with YAML frontmatter that teach an AI ag
 Agents can select a skill from a natural-language request. Client-specific menus and explicit invocation shortcuts vary by agent.
 
 > **Code review guidance.** OMD's language-aware review checklist for C, C++, Fortran, Python,
-> and Bash lives in [.github/instructions/code-review-generic.instructions.md](.github/instructions/code-review-generic.instructions.md).
-> VS Code loads it automatically for matching files.
+> and Bash lives in [.github/instructions/code-review-generic.instructions.md](.github/instructions/code-review-generic.instructions.md),
+> and VS Code loads it automatically for matching files. To run a full structured review of a
+> pull request — pinned revisions, comment triage, CI false-confidence checks, and a draft
+> (pending) review — use the [pr-review](skills/code-review/pr-review/SKILL.md) skill.
 
 ---
 
@@ -44,8 +46,8 @@ git clone https://github.com/NOAA-EMC/omd-skills.git
 cd omd-skills
 ```
 
-> This catalog is derived in part from the DOE/ModCon **Genesis Skills** collection; see
-> [NOTICE](NOTICE) for the upstream provenance of the retained subtrees.
+> Parts of this catalog are upstream-derived works shipped under Apache-2.0; see
+> [NOTICE](NOTICE) for the provenance of the retained subtrees.
 
 ### Method 1 — Install into a project (`install.sh`)
 
@@ -71,7 +73,7 @@ omd-skills --agents all --mode copy
 Interactive runs detect which agents a project uses and ask before placing
 anything; `--agents`, `--domains`, and `--no-interactive` cover scripting.
 `install.sh --list` previews the catalog. Installs are recorded in the
-project's `.ompd/genesis.lock`, so a later re-run refreshes only changed
+project's `.ompd/omd-skills.lock`, so a later re-run refreshes only changed
 material, protects files you edited locally, and `--uninstall` removes (or
 partially removes) exactly what was installed. See
 [docs/agent-install.md](docs/agent-install.md) for the per-agent layout, the
@@ -133,6 +135,7 @@ omd-skills/
 │   ├── SKILL.md
 │   └── scripts/skill_search.py
 ├── skills/
+│   ├── code-review/  # pr-review (1)
 │   ├── git-commit/SKILL.md
 │   ├── git-flow-branch-creator/SKILL.md
 │   ├── github-actions-efficiency/SKILL.md
@@ -142,7 +145,7 @@ omd-skills/
 │   ├── github-release/SKILL.md
 │   ├── hpc-skills/  # pbs, rdhpcs-cloud, rdhpcs-gaea, rdhpcs-hera, rdhpcs-hercules, rdhpcs-mercury, rdhpcs-orion, rdhpcs-ppan, rdhpcs-ursa, slurm (10)
 │   ├── literature-search/SKILL.md
-│   ├── omd-standards/  # ee2-standards (1)
+│   ├── omd-standards/  # cmake-hpc, ee2-standards (2)
 │   └── prompt-optimizer/SKILL.md
 ├── CONTRIBUTING.md
 ├── LICENSE

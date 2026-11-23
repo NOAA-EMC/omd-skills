@@ -1221,7 +1221,7 @@ def test_cli_profile_all_and_repeatable(tmp_path: Path) -> None:
 
 
 def test_shipped_catalog_discovers_at_least_20_skills() -> None:
-    # OMD-curated catalog floor (down from 30 under the Genesis catalog)
+    # OMD-curated catalog floor (down from 30 in the upstream catalog it replaced)
     discovery = vs.discover_skills([REPO_ROOT / "skills"])
     assert len(discovery.entries) >= 20
     assert all(entry.filename == "SKILL.md" for entry in discovery.entries)
