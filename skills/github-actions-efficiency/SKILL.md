@@ -1,6 +1,6 @@
 ---
 name: github-actions-efficiency
-description: 'Audit GitHub Actions workflow efficiency and recommend fixes to reduce CI minutes and costs.'
+description: 'Use when auditing GitHub Actions workflows to reduce CI runtime, minutes, or costs.'
 ---
 
 # GitHub Actions Efficiency

@@ -46,6 +46,15 @@ Known subtrees with separate licensing at the time of this writing:
                                     Apache-2.0. See
                                     skills/omd-standards/ATTRIBUTION.md.
 
+  skills/nsight-port-cpu-to-gpu/  NVIDIA Nsight GPU porting skill, vendored
+                                    from NVIDIA/nsight at commit
+                                    e13a6064690f9cf4f12686dda52c73a4bdd7bb07.
+                                    Documentation and assets use CC-BY-4.0;
+                                    source code uses Apache-2.0. See the
+                                    subtree LICENSE and upstream repository.
+                                    Metadata was adapted for Agent Skills;
+                                    the upstream signature is not retained.
+
 Upstream provenance
 
   `skills/hpc-skills/pbs`, `skills/hpc-skills/slurm`, and

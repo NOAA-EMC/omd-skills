@@ -227,6 +227,50 @@ jobs:
             exit 1
           fi
 
+  quality:
+    name: SkillEvaluator quality (1.2.1)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install SkillEvaluator
+        run: python3 -m pip install skillevaluator==1.2.1
+
+      - name: Check catalog quality
+        run: |
+          python3 tools/validate_skills.py --list > "$RUNNER_TEMP/skill-dirs.tsv"
+          mkdir -p "$RUNNER_TEMP/skill-quality"
+          failed=0
+          count=0
+          while IFS=$'\t' read -r name dir; do
+            [ -n "$name" ] && [ -n "$dir" ] || continue
+            count=$((count + 1))
+            echo "Checking $name ($dir)"
+            if ! skillevaluator quality-check "$dir" --min-score 70 \
+                -r cli,json -o "$RUNNER_TEMP/skill-quality/$name"; then
+              failed=$((failed + 1))
+            fi
+          done < "$RUNNER_TEMP/skill-dirs.tsv"
+          echo "SkillEvaluator: $count skills checked; $failed failed." >> "$GITHUB_STEP_SUMMARY"
+          if [ "$count" -eq 0 ] || [ "$failed" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Upload quality reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: skillevaluator-quality-reports
+          path: ${{ runner.temp }}/skill-quality/
+          if-no-files-found: ignore
+
   # pytest on tools/tests: the validator's unit tests and the unpack.sh
   # black-box tests. Some of them read the live catalog (skills/ and
   # skill-search/), which is why this job lives under this workflow's skills/**

@@ -1249,3 +1249,13 @@ def test_cli_default_paths_cover_the_catalog() -> None:
 def test_rule_ids_are_namespaced_by_profile() -> None:
     for rid, info in vs.RULES.items():
         assert rid.startswith(info.profile + "-"), rid
+
+
+def test_markdown_fragment_does_not_make_existing_file_missing(tmp_path: Path) -> None:
+    skill = tmp_path / 'fragment-skill'
+    skill.mkdir()
+    (skill / 'SKILL.md').write_text('---\nname: fragment-skill\ndescription: Use when testing fragments.\n---\nSee [guide](references/guide.md#section).\n')
+    (skill / 'references').mkdir()
+    (skill / 'references' / 'guide.md').write_text('# Section\n')
+    findings = validate(skill, ['spec'])
+    assert not [f for f in findings if f.rule_id == 'spec-files-relative-paths-from-root']

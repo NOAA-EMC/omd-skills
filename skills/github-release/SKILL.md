@@ -1,8 +1,8 @@
 ---
 name: github-release
 description: >
-  Guides IA through releasing a new version of a GitHub library end-to-end.
-  Handles SemVer versioning and Keep a Changelog formatting automatically.
+  Use when releasing a new version of a GitHub library with SemVer and
+  Keep a Changelog formatting.
 compatibility: "requires: gh CLI and git"
 ---
 
