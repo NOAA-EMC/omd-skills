@@ -145,6 +145,7 @@ omd-skills/
 │   ├── github-release/SKILL.md
 │   ├── hpc-skills/  # pbs, rdhpcs-cloud, rdhpcs-gaea, rdhpcs-hera, rdhpcs-hercules, rdhpcs-mercury, rdhpcs-orion, rdhpcs-ppan, rdhpcs-ursa, slurm (10)
 │   ├── literature-search/SKILL.md
+│   ├── nsight-port-cpu-to-gpu/SKILL.md
 │   ├── omd-standards/  # cmake-hpc, ee2-standards (2)
 │   └── prompt-optimizer/SKILL.md
 ├── CONTRIBUTING.md
@@ -177,6 +178,15 @@ day, with goals that mirror how the division works:
    rather than re-inventing local agent setup
 
 ---
+
+## Skill quality checks
+
+The Validate skills workflow runs NVIDIA SkillEvaluator 1.2.1's keyless
+`quality-check` on every catalog skill, including `skill-search`. Scores below
+70 fail the job; JSON reports are uploaded as a workflow artifact. These
+heuristic quality checks do not include security scanning or live agent tests.
+To run one locally, install `skillevaluator==1.2.1` with Python 3.12 or later
+and run `skillevaluator quality-check path/to/skill --min-score 70`.
 
 ## Contributing
 

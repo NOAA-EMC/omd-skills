@@ -857,8 +857,9 @@ def _normalize_ref(target: str) -> str:
 def _make_ref(skill_dir: Path, text: str, line: int, kind: str) -> FileRef | None:
     if not text or _URL_RE.match(text) or text.startswith("#") or any(ch in text for ch in "*?{}<>|$"):
         return None
-    absolute = text.startswith(("/", "~"))
-    parts = [p for p in text.split("/") if p not in ("", ".")]
+    path_text = text.split("#", 1)[0] if kind == "link" else text
+    absolute = path_text.startswith(("/", "~"))
+    parts = [p for p in path_text.split("/") if p not in ("", ".")]
     parent_escape = ".." in parts
     resolved: Path | None = None
     exists = False
